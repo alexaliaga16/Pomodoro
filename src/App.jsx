@@ -74,7 +74,6 @@ function App() {
       </div>
 
       {/* Panel derecho */}
-      {/* Panel derecho */}
       <div className={`absolute right-4 top-1/2 -translate-y-1/2 w-80 min-h-200 bg-black/60 backdrop-blur-sm rounded-4xl p-4 border border-white/10 transition-all duration-500
   ${corriendo ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
         <h2 className="text-sm font-bold tracking-widest">VIBES</h2>

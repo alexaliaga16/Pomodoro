@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import GlassButton from './ui/GlassButton'
 
 function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
     const [editando, setEditando] = useState(false)
@@ -26,13 +27,14 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
         <div className="flex flex-col items-center gap-8">
 
             <div className="flex items-center gap-8">
-                <button
+
+                <GlassButton
                     onClick={() => onAjustar(-1)}
-                    className={`w-11 h-11 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white/50 hover:text-white text-2xl border border-white/20 transition-all hover:scale-120 flex items-center justify-center
-  ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
+                    className={`w-10 h-10 rounded-full text-xl
+                        ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
                 >
                     −
-                </button>
+                </GlassButton>
 
                 {editando ? (
                     <input
@@ -52,7 +54,7 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                     <h1
                         onClick={!corriendo ? abrirEditor : undefined}
                         className={`text-9xl font-bold transition-all duration-300
-    ${!corriendo
+                            ${!corriendo
                                 ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
                                 : 'cursor-default'
                             }`}
@@ -61,13 +63,14 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                     </h1>
                 )}
 
-                <button
+                <GlassButton
                     onClick={() => onAjustar(1)}
-                    className={`w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-2xl border border-white/5 transition-all hover:scale-120 flex items-center justify-center
-  ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
+                    className={`w-10 h-10 rounded-full text-xl
+                        ${corriendo ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
                 >
                     +
-                </button>
+                </GlassButton>
+
             </div>
 
             <button
