@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
 
 function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
     const [editando, setEditando] = useState(false)
@@ -28,10 +30,17 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
             <div className="flex items-center gap-8">
                 <button
                     onClick={() => onAjustar(-1)}
-                    className={`w-11 h-11 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white/50 hover:text-white text-2xl border border-white/20 transition-all hover:scale-120 flex items-center justify-center
-  ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
-                >
-                    −
+                    className={`w-12 h-12 rounded-full 
+                        bg-white/10 backdrop-blur-md 
+                        border border-white/20 
+                        text-white 
+                        flex items-center justify-center
+                        shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.4)]
+                        transition-all duration-300
+                        hover:scale-110 hover:bg-white/20
+                        active:scale-95
+                        ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
+                    <FontAwesomeIcon icon={faMinus} />
                 </button>
 
                 {editando ? (
@@ -63,10 +72,17 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
 
                 <button
                     onClick={() => onAjustar(1)}
-                    className={`w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-2xl border border-white/5 transition-all hover:scale-120 flex items-center justify-center
-  ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
-                >
-                    +
+                    className={`w-12 h-12 rounded-full 
+                        bg-white/10 backdrop-blur-md 
+                        border border-white/20 
+                        text-white 
+                        flex items-center justify-center
+                        shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_8px_32px_rgba(0,0,0,0.4)]
+                        transition-all duration-300
+                        hover:scale-110 hover:bg-white/20
+                        active:scale-95
+                        ${corriendo ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
+                    <FontAwesomeIcon icon={faPlus} />
                 </button>
             </div>
 
