@@ -52,15 +52,15 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                     />
                 ) : (
                     <h1
-                        onClick={!corriendo ? abrirEditor : undefined}
-                        className={`text-9xl font-bold transition-all duration-300
-                            ${!corriendo
-                                ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
-                                : 'cursor-default'
-                            }`}
-                    >
-                        {display}
-                    </h1>
+  onClick={!corriendo ? abrirEditor : undefined}
+  className={`font-bold transition-all duration-300 text-[clamp(4rem,15vw,9rem)]
+    ${!corriendo
+      ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
+      : 'cursor-default'
+    }`}
+>
+  {display}
+</h1>
                 )}
 
                 <GlassButton
