@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import GlassButton from './ui/GlassButton'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
 
 function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
     const [editando, setEditando] = useState(false)
@@ -30,10 +32,10 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
 
                 <GlassButton
                     onClick={() => onAjustar(-1)}
-                    className={`w-10 h-10 rounded-full text-xl
+                    className={`w-12 h-12 rounded-full
                         ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
                 >
-                    −
+                    <FontAwesomeIcon icon={faMinus} />
                 </GlassButton>
 
                 {editando ? (
@@ -52,23 +54,23 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                     />
                 ) : (
                     <h1
-  onClick={!corriendo ? abrirEditor : undefined}
-  className={`font-bold transition-all duration-300 text-[clamp(4rem,15vw,9rem)]
-    ${!corriendo
-      ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
-      : 'cursor-default'
-    }`}
->
-  {display}
-</h1>
+                        onClick={!corriendo ? abrirEditor : undefined}
+                        className={`font-bold transition-all duration-300 text-[clamp(4rem,15vw,9rem)]
+                            ${!corriendo
+                                ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
+                                : 'cursor-default'
+                            }`}
+                    >
+                        {display}
+                    </h1>
                 )}
 
                 <GlassButton
                     onClick={() => onAjustar(1)}
-                    className={`w-10 h-10 rounded-full text-xl
+                    className={`w-12 h-12 rounded-full
                         ${corriendo ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
                 >
-                    +
+                    <FontAwesomeIcon icon={faPlus} />
                 </GlassButton>
 
             </div>
