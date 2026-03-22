@@ -43,6 +43,7 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                         autoFocus
                         type="text"
                         inputMode="numeric"
+                        placeholder='1-999'
                         value={valorInput}
                         onChange={e => {
                             const val = e.target.value.replace(/[^0-9]/g, '')
@@ -55,7 +56,7 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                 ) : (
                     <h1
                         onClick={!corriendo ? abrirEditor : undefined}
-                        className={`font-bold transition-all duration-300 text-[clamp(4rem,15vw,9rem)]
+                        className={`font-[Source_Code_Pro] font-bold transition-all duration-300 text-[clamp(4rem,15vw,9rem)]
                             ${!corriendo
                                 ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
                                 : 'cursor-default'
