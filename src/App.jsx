@@ -70,6 +70,8 @@ function App() {
   const [corriendo, setCorriendo] = useState(false)
   const [tareas, setTareas] = useState([])
   const [nuevaTarea, setNuevaTarea] = useState('')
+  const [sesion, setSesion] = useState(1)
+  const [totalSesiones, setTotalSesiones] = useState(4)
 
   const segundos = tiempos[modo]
 
@@ -84,8 +86,9 @@ function App() {
   useEffect(() => {
     if(segundos <= 0 && corriendo) {
       setCorriendo(false)
+      setSesion(s => s +1)
     }
-  })
+  }, [segundos, corriendo])
 
   const cambiarModo = (nuevoModo) => {
     setModo(nuevoModo)
