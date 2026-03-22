@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Timer from "./components/Timer";
 import ModoSelector from "./components/ModoSelector";
+import ContadorSesiones from "./components/ContadorSesiones";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
@@ -60,13 +61,19 @@ function App() {
   const defaultBg = "src/assets/Image_20260320_141153.png";
 
   const [modo, setModo] = useState("focus");
-  const [tiempos, setTiempos] = useState({
+  const [tiempoGuardado, setTiempoGuardado] = useState({
     focus: 25 * 60,
     shortBreak: 5 * 60,
     longBreak: 15 * 60,
   });
 
-  const [corriendo, setCorriendo] = useState(false);  const [tareas, setTareas] = useState([]);
+  const [tiempoDinamico, setTiempoDinamico] = useState({
+    focus: 25 * 60,
+    shortBreak: 5 * 60,
+    longBreak: 15 * 60,
+  })
+
+  const [corriendo, setCorriendo] = useState(false); const [tareas, setTareas] = useState([]);
   const [nuevaTarea, setNuevaTarea] = useState("");
 
   const [spotifyActivo, setSpotifyActivo] = useState(false);
@@ -76,21 +83,56 @@ function App() {
   const [sesion, setSesion] = useState(1)
   const [totalSesiones, setTotalSesiones] = useState(4)
 
-  const segundos = tiempos[modo];
+  const segundos = tiempoDinamico[modo];
 
   /* TIMER */
   useEffect(() => {
     if (!corriendo) return;
     const i = setInterval(() => {
-      setTiempos((t) => ({ ...t, [modo]: t[modo] - 1 }));
+      setTiempoDinamico((t) => ({ ...t, [modo]: t[modo] - 1 }));
     }, 1000);
     return () => clearInterval(i);
   }, [corriendo, modo]);
 
   useEffect(() => {
-    if(segundos <= 0 && corriendo) {
-      setCorriendo(false)
-      setSesion(s => s +1)
+    if (segundos <= 0 && corriendo) {
+
+      if (modo === 'focus') {
+        if (sesion < totalSesiones) {
+          setModo('shortBreak')
+          setSesion(s => s + 1)
+          setCorriendo(true)
+          setTiempoDinamico(t => ({
+            ...t, shortBreak: tiempoGuardado.shortBreak,
+            focus: tiempoGuardado.focus
+          }))
+        } else {
+          setModo('longBreak')
+          setCorriendo(true)
+          setTiempoDinamico(t => ({
+            ...t,
+            longBreak: tiempoGuardado.longBreak,
+            focus: tiempoGuardado.focus
+          }))
+        }
+      }
+
+      if (modo === 'shortBreak' || modo === 'longBreak') {
+        setModo('focus')
+        setTiempoDinamico(t => ({
+          ...t,
+          focus: tiempoGuardado.focus,
+          shortBreak: tiempoGuardado.shortBreak,
+          longBreak: tiempoGuardado.longBreak
+        }))
+        if (modo === 'longBreak') {
+          setSesion(1)
+          setCorriendo(false)
+        } else {
+          setCorriendo(true)
+        }
+      }
+
     }
   }, [segundos, corriendo])
 
@@ -113,9 +155,9 @@ function App() {
       prev.map((t) =>
         t.id === id
           ? {
-              ...t,
-              estado: t.estado === "pendiente" ? "terminado" : "pendiente",
-            }
+            ...t,
+            estado: t.estado === "pendiente" ? "terminado" : "pendiente",
+          }
           : t,
       ),
     );
@@ -130,6 +172,28 @@ function App() {
       return arrayMove(items, oldIndex, newIndex);
     });
   };
+
+  const cambiarTiempo = (minutos) => {
+    setTiempoGuardado((t) => ({ ...t, [modo]: minutos * 60 }));
+    setTiempoDinamico((t) => ({ ...t, [modo]: minutos * 60 }));
+  }
+
+  const ajustarTiempo = (direccion) => {
+    setTiempoGuardado((t) => {
+      const nuevoValor = t[modo] + direccion * 5 * 60
+      const limitado = Math.min(Math.max(nuevoValor, 60), 999 * 60)
+      return { ...t, [modo]: limitado }
+    })
+    setTiempoDinamico((t) => {
+      const nuevoValor = t[modo] + direccion * 5 * 60
+      const limitado = Math.min(Math.max(nuevoValor, 60), 999 * 60)
+      return { ...t, [modo]: limitado }
+    })
+  }
+
+  const cambiarSesion = (totalSesiones) => {
+    setTotalSesiones(Math.min(Math.max(totalSesiones, 1), 15))
+  }
 
   return (
     <div
@@ -146,7 +210,7 @@ function App() {
   bg-black/60 rounded-3xl p-4 flex flex-col transition-all duration-500
   ${corriendo ? "opacity-0 -translate-x-10" : "opacity-100"}`}
       >
-        <h2 className="mb-3 text-sm">TAREAS</h2>
+        <h2 className="mb-3 text-sm">TASKS</h2>
 
         <DndContext
           collisionDetection={closestCenter}
@@ -184,11 +248,21 @@ function App() {
   transition-all duration-500 z-[1]
   ${corriendo ? "scale-[1.05]" : "scale-100"}`}
       >
+
+        <ContadorSesiones
+          sesion={sesion}
+          totalSesiones={totalSesiones}
+          onCambiarSesion={cambiarSesion}
+        />
+
         <ModoSelector modo={modo} onCambiarModo={setModo} />
 
         <Timer
           segundos={segundos}
           corriendo={corriendo}
+          onCambiarTiempo={cambiarTiempo}
+          onAjustar={ajustarTiempo}
+
           onToggle={() => setCorriendo(!corriendo)}
         />
 
@@ -199,9 +273,8 @@ function App() {
       bg-black/50 rounded-2xl overflow-hidden border border-white/20"
             >
               <iframe
-                src={`https://open.spotify.com/embed/playlist/${
-                  playlistActiva || "37i9dQZF1DX8Uebhn9wzrS"
-                }`}
+                src={`https://open.spotify.com/embed/playlist/${playlistActiva || "37i9dQZF1DX8Uebhn9wzrS"
+                  }`}
                 width="100%"
                 height="100%"
                 className="w-full h-full"
