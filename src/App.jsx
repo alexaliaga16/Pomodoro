@@ -100,7 +100,6 @@ function App() {
       if (modo === 'focus') {
         if (sesion < totalSesiones) {
           setModo('shortBreak')
-          setSesion(s => s + 1)
           setCorriendo(true)
           setTiempoDinamico(t => ({
             ...t, shortBreak: tiempoGuardado.shortBreak,
@@ -119,6 +118,7 @@ function App() {
 
       if (modo === 'shortBreak' || modo === 'longBreak') {
         setModo('focus')
+        setSesion(s => s + 1)
         setTiempoDinamico(t => ({
           ...t,
           focus: tiempoGuardado.focus,
