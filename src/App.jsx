@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Timer from "./components/Timer";
 import ModoSelector from "./components/ModoSelector";
 import ContadorSesiones from "./components/ContadorSesiones";
+import Reproductor from "./components/Reproductor";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
@@ -22,7 +23,6 @@ const colorPrioridad = {
   alta: "bg-rose-500",
 };
 
-/* ================= STREAMS (🔥 NUEVO) ================= */
 const vibes = [
   {
     name: "Lofi",
@@ -80,10 +80,9 @@ function TareaItem({
         flex flex-col gap-2
         transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
       
-        ${
-          eliminando
-            ? "opacity-0 translate-x-10 scale-95 blur-sm"
-            : "opacity-100 translate-x-0 scale-100"
+        ${eliminando
+          ? "opacity-0 translate-x-10 scale-95 blur-sm"
+          : "opacity-100 translate-x-0 scale-100"
         }
       `}
     >
@@ -151,11 +150,10 @@ function TareaItem({
                 onClick={() => cambiarPrioridad(tarea.id, p)}
                 className={`w-4 h-4 rounded-full cursor-pointer transition-all duration-300
                 ${colorPrioridad[p]}
-                ${
-                  tarea.prioridad === p
+                ${tarea.prioridad === p
                     ? "scale-110 ring-2 ring-white shadow-lg"
                     : "opacity-30 hover:opacity-100 hover:scale-110"
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -203,6 +201,25 @@ function App() {
 
   const [visible, setVisible] = useState(false);
 
+  const [favoritos, setFavoritos] = useState([]);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const fondos = [
+    defaultBg,
+    "https://i.gifer.com/xK.gif",
+    "https://i.gifer.com/QHC.gif",
+    "https://i.gifer.com/ZP5.gif",
+    "https://i.gifer.com/AJl.gif",
+    "https://i.gifer.com/SxJ.gif",
+    "https://i.gifer.com/SxQ.gif",
+  ];
+
+  const [indexFondo, setIndexFondo] = useState(() => {
+    const i = fondos.indexOf(fondo);
+    return i !== -1 ? i : 0;
+  });
+
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(t);
@@ -215,6 +232,25 @@ function App() {
   useEffect(() => {
     localStorage.setItem("fondo", fondo);
   }, [fondo]);
+
+  useEffect(() => {
+    setFondo(fondos[indexFondo]);
+  }, [indexFondo]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.code === "ArrowRight") {
+        setIndexFondo((i) => (i + 1) % fondos.length);
+      }
+
+      if (e.code === "ArrowLeft") {
+        setIndexFondo((i) => (i - 1 + fondos.length) % fondos.length);
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   const segundos = tiempoDinamico[modo];
 
@@ -269,6 +305,18 @@ function App() {
     }
   }, [segundos, corriendo]);
 
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.code === "Space") {
+        e.preventDefault(); // evita scroll
+        togglePlay();
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [audio, isPlaying]);
+
   const reproducirStream = (vibe) => {
     if (audio) {
       audio.pause();
@@ -278,12 +326,26 @@ function App() {
     nuevoAudio.loop = true;
     nuevoAudio.volume = 0.5;
 
-    nuevoAudio.play().catch(() => {
+    nuevoAudio.play().then(() => {
+      setIsPlaying(true);
+    }).catch(() => {
       console.log("Autoplay bloqueado");
     });
 
     setAudio(nuevoAudio);
     setVibeActiva(vibe.name);
+  };
+
+  const togglePlay = () => {
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      audio.play();
+      setIsPlaying(true);
+    }
   };
 
   /* TAREAS */
@@ -307,6 +369,14 @@ function App() {
     setNuevaTarea("");
   };
 
+  const toggleFavorito = (name) => {
+    setFavoritos((prev) =>
+      prev.includes(name)
+        ? prev.filter((f) => f !== name)
+        : [...prev, name]
+    );
+  };
+
   const eliminarTarea = (id) => {
     setEliminandoId(id);
 
@@ -321,9 +391,9 @@ function App() {
       prev.map((t) =>
         t.id === id
           ? {
-              ...t,
-              estado: t.estado === "pendiente" ? "terminado" : "pendiente",
-            }
+            ...t,
+            estado: t.estado === "pendiente" ? "terminado" : "pendiente",
+          }
           : t,
       ),
     );
@@ -380,18 +450,20 @@ function App() {
         backgroundPosition: "center",
       }}
     >
+
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px] backdrop-brightness-90" />
+
       {/* IZQUIERDA */}
       <div
         className={`absolute z-[100] left-15 top-1/2 -translate-y-1/2 w-90 h-[85%]
         glass-dark rounded-3xl p-4 flex flex-col
         transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] 
-        ${
-          corriendo
+        ${corriendo
             ? "opacity-0 -translate-x-40"
             : visible
               ? "opacity-100 translate-x-0"
               : "opacity-0 -translate-x-40"
-        }`}
+          }`}
       >
         <h2 className="mb-3 text-sm tit">Tasks</h2>
 
@@ -432,10 +504,9 @@ function App() {
             disabled={!nuevaTarea.trim()}
             className={`w-10 h-10 rounded-full flex items-center justify-center
               transition-all duration-200 active:scale-90
-              ${
-                nuevaTarea.trim()
-                  ? "bg-blue-500 scale-100 opacity-100"
-                  : "bg-white/10 scale-90 opacity-50 cursor-not-allowed"
+              ${nuevaTarea.trim()
+                ? "bg-blue-500 scale-100 opacity-100"
+                : "bg-white/10 scale-90 opacity-50 cursor-not-allowed"
               }`}
           >
             <i className="fas fa-paper-plane text-white text-sm"></i>
@@ -448,12 +519,11 @@ function App() {
         className={`flex-1 flex flex-col items-center justify-center gap-6
           transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-[1]
 
-          ${
-            !visible
-              ? "opacity-0 scale-75"
-              : corriendo
-                ? "opacity-100 scale-[1.08]"
-                : "opacity-100 scale-100"
+          ${!visible
+            ? "opacity-0 scale-75"
+            : corriendo
+              ? "opacity-100 scale-[1.08]"
+              : "opacity-100 scale-100"
           }`}
       >
         <ContadorSesiones
@@ -483,12 +553,30 @@ function App() {
           }}
         />
 
-        {tareaActiva && (
-          <div className="bg-white/10 px-6 py-4 rounded-2xl text-center">
-            <p className="text-xs text-white/50 mb-1">Trabajando en</p>
-            <h3 className="text-lg">{tareaActiva.texto}</h3>
+        {(corriendo || vibeActiva) && (
+          <div
+            className={`
+            absolute top-[5%] right-[5%] z-[200]
+            transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
+          
+            ${corriendo
+                ? "opacity-100 translate-y-0 scale-100"
+                : "opacity-0 -translate-y-10 scale-90 pointer-events-none"
+              }
+          `}
+          >
+            <Reproductor
+              vibeActiva={vibeActiva}
+              vibes={vibes}
+              onPlay={reproducirStream}
+              favoritos={favoritos}
+              toggleFavorito={toggleFavorito}
+              togglePlay={togglePlay}
+              isPlaying={isPlaying}
+            />
           </div>
         )}
+
       </div>
 
       {/* DERECHA */}
@@ -496,25 +584,33 @@ function App() {
         className={`absolute z-[50] right-15 top-1/2 -translate-y-1/2 w-90 h-[85%]
             flex flex-col gap-4
             transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${
-              corriendo
-                ? "opacity-0 translate-x-40"
-                : visible
-                  ? "opacity-100 translate-x-0"
-                  : "opacity-0 translate-x-40"
-            }`}
+            ${corriendo
+            ? "opacity-0 translate-x-40"
+            : visible
+              ? "opacity-100 translate-x-0"
+              : "opacity-0 translate-x-40"
+          }`}
       >
         <div
-          className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col
+          className="flex-1 relative overflow-hidden rounded-3xl py-6 px-4 flex flex-col
             bg-[rgba(20,20,30,0.45)]
             backdrop-blur-[20px]
             backdrop-saturate-150
             border border-white/10
             shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
         >
-          <h2 className="mb-3 text-sm tit shrink-0">Vibes</h2>
+          <div className="mb-3 flex items-center justify-between px-4 ">
+            <h2 className="text-sm tit">Vibes</h2>
 
-          <div className="flex-1 overflow-auto scroll-invisible">
+            {vibeActiva && (
+              <div className="flex items-center gap-1 text-[13px]  text-white/70 ">
+                <span className="animate-pulse text-red-500 drop-shadow-[0_0_6px_red] ">●</span>
+                En vivo
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-auto scroll-invisible px-2">
             <div className="grid grid-cols-2 gap-3">
               {vibes.map((item) => {
                 const activo = vibeActiva === item.name;
@@ -522,66 +618,62 @@ function App() {
                 return (
                   <div
                     key={item.name}
-                    onClick={() => reproducirStream(item)}
-                    className="
-            relative h-20 rounded-2xl cursor-pointer 
-            flex items-center justify-center text-xs overflow-hidden group
-            border border-white/10
-            transition-all duration-300
-            hover:scale-[1.05] active:scale-95
-          "
+                    onClick={() => {
+                      if (activo) {
+                        if (audio) audio.pause();
+                        setIsPlaying(false);
+                        setVibeActiva(null);
+                      } else {
+                        reproducirStream(item);
+                      }
+                    }}
+                    className={`
+                      relative h-18 rounded-2xl cursor-pointer overflow-hidden
+                      flex items-center gap-3 px-3
+                      border border-white/10
+                      bg-[rgba(20,20,30,0.5)]
+                      backdrop-blur-[14px]
+                      transition-all duration-300
+                      hover:scale-[1.03] active:scale-95
+                    `}
                   >
-                    {/* FONDO GRADIENTE */}
-                    <div
-                      className="absolute inset-0 rounded-2xl transition-all duration-500"
-                      style={{
-                        background: `linear-gradient(135deg, ${item.color}40, transparent)`,
-                      }}
-                    />
-
-                    {/* GLASS */}
-                    <div className="absolute inset-0 backdrop-blur-[14px] bg-black/30 rounded-2xl" />
-
-                    {/* GLOW HOVER */}
-                    <div
-                      className="
-              absolute inset-0 rounded-2xl opacity-0 
-              group-hover:opacity-100 transition duration-300
-            "
-                      style={{
-                        boxShadow: `0 0 25px ${item.color}`,
-                      }}
-                    />
-
-                    {/* ACTIVO (🔥 mejorado) */}
                     {activo && (
-                      <>
-                        <div
-                          className="absolute inset-0 rounded-2xl animate-pulse"
-                          style={{
-                            border: `2px solid ${item.color}`,
-                            boxShadow: `0 0 15px ${item.color}`,
-                          }}
-                        />
-                        <div className="absolute top-1 right-2 text-[10px] text-white/70">
-                          ● LIVE
-                        </div>
-                      </>
+                      <div
+                        className="absolute inset-0 rounded-2xl opacity-12"
+                        style={{
+                          background: item.color,
+                        }}
+                      />
                     )}
+                    {/* 🎧 COVER */}
+                    <div
+                      className="w-12 h-12 rounded-xl bg-cover bg-center shrink-0"
+                      style={{
+                        backgroundImage: `url(https://picsum.photos/200?random=${item.name})`
+                      }}
+                    />
 
                     {/* TEXTO */}
-                    <span
-                      className="
-              relative z-10 font-medium text-sm
-              transition-all duration-300 
-              group-hover:scale-110
-            "
-                      style={{
-                        color: activo ? item.color : "white",
-                      }}
-                    >
-                      {item.name}
-                    </span>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-sm font-medium truncate">
+                        {item.name}
+                      </p>
+                      <p className="text-[11px] text-white/50">
+                        Live radio
+                      </p>
+                    </div>
+
+
+                    {/* GLOW ACTIVO */}
+                    {activo && (
+                      <div
+                        className="absolute inset-0 rounded-2xl pointer-events-none animate-pulse"
+                        style={{
+                          border: `2px solid ${item.color}`,
+                          boxShadow: `0 0 12px ${item.color}`,
+                        }}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -598,10 +690,8 @@ function App() {
             border border-white/10
             shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
         >
-          {/* HEADER */}
           <h2 className="mb-3 text-sm tit shrink-0">Theme</h2>
 
-          {/* SCROLL */}
           <div className="flex-1 overflow-auto scroll-invisible">
             <div className="grid grid-cols-2 gap-3.5">
               {[
@@ -618,14 +708,18 @@ function App() {
                 return (
                   <div
                     key={i}
-                    onClick={() => setFondo(img)}
+                    onClick={() => {
+                      setIndexFondo(i);
+                    }}
                     className="h-18 rounded-xl bg-cover bg-center cursor-pointer relative"
                     style={{ backgroundImage: `url(${img})` }}
                   >
-                    <div className="absolute inset-0 bg-black/8 rounded-xl" />
-
+                    <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px] rounded-xl" />
                     {activo && (
-                      <div className="absolute inset-0 border-2 border-white rounded-xl" />
+                      <>
+                        <div className="absolute inset-0 rounded-xl border-2 border-white/80" />
+                        <div className="absolute inset-0 rounded-xl animate-pulse border border-white/30" />
+                      </>
                     )}
                   </div>
                 );
