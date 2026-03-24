@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Timer from "./components/Timer";
 import ModoSelector from "./components/ModoSelector";
 import ContadorSesiones from "./components/ContadorSesiones";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
@@ -22,12 +22,51 @@ const colorPrioridad = {
   alta: "bg-rose-500",
 };
 
+/* ================= STREAMS (🔥 NUEVO) ================= */
+const vibes = [
+  {
+    name: "Lofi",
+    url: "https://stream.zeno.fm/0vgy8qv3feruv",
+    color: "#ec4899",
+  },
+  {
+    name: "Focus",
+    url: "https://stream.zeno.fm/0r0xa792kwzuv",
+    color: "#3b82f6",
+  },
+  {
+    name: "Chill",
+    url: "https://stream.zeno.fm/8s5u5tpdtwzuv",
+    color: "#8b5cf6",
+  },
+  {
+    name: "Energy",
+    url: "https://stream.zeno.fm/7b9v0h2zzwzuv",
+    color: "#f59e0b",
+  },
+  {
+    name: "Ambient",
+    url: "https://stream.zeno.fm/4wqre23fytzuv",
+    color: "#10b981",
+  },
+  {
+    name: "Deep",
+    url: "https://stream.zeno.fm/9k0y8p9k2wzuv",
+    color: "#a855f7",
+  },
+];
+
 /* ================= ITEM ================= */
-function TareaItem({ tarea, cambiarEstado, eliminar, cambiarPrioridad, eliminando }) {
+function TareaItem({
+  tarea,
+  cambiarEstado,
+  eliminar,
+  cambiarPrioridad,
+  eliminando,
+}) {
   const { attributes, listeners, setNodeRef, transform } = useSortable({
     id: tarea.id,
   });
-
 
   return (
     <div
@@ -41,9 +80,11 @@ function TareaItem({ tarea, cambiarEstado, eliminar, cambiarPrioridad, eliminand
         flex flex-col gap-2
         transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
       
-        ${eliminando
-          ? "opacity-0 translate-x-10 scale-95 blur-sm"
-          : "opacity-100 translate-x-0 scale-100"}
+        ${
+          eliminando
+            ? "opacity-0 translate-x-10 scale-95 blur-sm"
+            : "opacity-100 translate-x-0 scale-100"
+        }
       `}
     >
       {/* TOP */}
@@ -86,13 +127,16 @@ function TareaItem({ tarea, cambiarEstado, eliminar, cambiarPrioridad, eliminand
           ✕
         </button>
 
-        <div {...attributes} {...listeners} className="cursor-grab text-white/50">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-white/50"
+        >
           ☰
         </div>
       </div>
 
       <div className="flex items-center justify-between text-xs mt-1">
-
         <span className="text-white/40 tracking-wide text-[13px]">
           {tarea.fecha}
         </span>
@@ -107,10 +151,11 @@ function TareaItem({ tarea, cambiarEstado, eliminar, cambiarPrioridad, eliminand
                 onClick={() => cambiarPrioridad(tarea.id, p)}
                 className={`w-4 h-4 rounded-full cursor-pointer transition-all duration-300
                 ${colorPrioridad[p]}
-                ${tarea.prioridad === p
+                ${
+                  tarea.prioridad === p
                     ? "scale-110 ring-2 ring-white shadow-lg"
                     : "opacity-30 hover:opacity-100 hover:scale-110"
-                  }`}
+                }`}
               />
             ))}
           </div>
@@ -146,9 +191,8 @@ function App() {
     return guardado ? JSON.parse(guardado) : [];
   });
   const [nuevaTarea, setNuevaTarea] = useState("");
-
-  const [spotifyActivo, setSpotifyActivo] = useState(false);
-  const [playlistActiva, setPlaylistActiva] = useState(null);
+  const [audio, setAudio] = useState(null);
+  const [vibeActiva, setVibeActiva] = useState(null);
 
   const [fondo, setFondo] = useState(() => {
     return localStorage.getItem("fondo") || defaultBg;
@@ -163,7 +207,6 @@ function App() {
     const t = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(t);
   }, []);
-
 
   useEffect(() => {
     localStorage.setItem("tareas", JSON.stringify(tareas));
@@ -226,6 +269,23 @@ function App() {
     }
   }, [segundos, corriendo]);
 
+  const reproducirStream = (vibe) => {
+    if (audio) {
+      audio.pause();
+    }
+
+    const nuevoAudio = new Audio(vibe.url);
+    nuevoAudio.loop = true;
+    nuevoAudio.volume = 0.5;
+
+    nuevoAudio.play().catch(() => {
+      console.log("Autoplay bloqueado");
+    });
+
+    setAudio(nuevoAudio);
+    setVibeActiva(vibe.name);
+  };
+
   /* TAREAS */
   const agregarTarea = () => {
     if (!nuevaTarea.trim()) return;
@@ -245,7 +305,6 @@ function App() {
 
     setTareas((prev) => [nueva, ...prev]);
     setNuevaTarea("");
-
   };
 
   const eliminarTarea = (id) => {
@@ -262,19 +321,17 @@ function App() {
       prev.map((t) =>
         t.id === id
           ? {
-            ...t,
-            estado: t.estado === "pendiente" ? "terminado" : "pendiente",
-          }
-          : t
-      )
+              ...t,
+              estado: t.estado === "pendiente" ? "terminado" : "pendiente",
+            }
+          : t,
+      ),
     );
   };
 
   const cambiarPrioridad = (id, prioridad) => {
     setTareas((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, prioridad } : t
-      )
+      prev.map((t) => (t.id === id ? { ...t, prioridad } : t)),
     );
   };
 
@@ -312,7 +369,7 @@ function App() {
     setTotalSesiones(Math.min(Math.max(totalSesiones, 1), 15));
   };
 
-  const tareaActiva = tareas.find(t => t.estado === "pendiente");
+  const tareaActiva = tareas.find((t) => t.estado === "pendiente");
 
   return (
     <div
@@ -328,20 +385,25 @@ function App() {
         className={`absolute z-[100] left-15 top-1/2 -translate-y-1/2 w-90 h-[85%]
         glass-dark rounded-3xl p-4 flex flex-col
         transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] 
-        ${corriendo
+        ${
+          corriendo
             ? "opacity-0 -translate-x-40"
             : visible
               ? "opacity-100 translate-x-0"
               : "opacity-0 -translate-x-40"
-          }`}>
+        }`}
+      >
         <h2 className="mb-3 text-sm tit">Tasks</h2>
 
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
             items={tareas.map((t) => t.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex-1 overflow-auto space-y-2 overflow-hidden" >
+            <div className="flex-1 overflow-auto space-y-2 overflow-hidden">
               {tareas.map((t) => (
                 <TareaItem
                   key={t.id}
@@ -370,9 +432,10 @@ function App() {
             disabled={!nuevaTarea.trim()}
             className={`w-10 h-10 rounded-full flex items-center justify-center
               transition-all duration-200 active:scale-90
-              ${nuevaTarea.trim()
-                ? "bg-blue-500 scale-100 opacity-100"
-                : "bg-white/10 scale-90 opacity-50 cursor-not-allowed"
+              ${
+                nuevaTarea.trim()
+                  ? "bg-blue-500 scale-100 opacity-100"
+                  : "bg-white/10 scale-90 opacity-50 cursor-not-allowed"
               }`}
           >
             <i className="fas fa-paper-plane text-white text-sm"></i>
@@ -380,17 +443,17 @@ function App() {
         </div>
       </div>
 
-
       {/* CENTRO */}
       <div
         className={`flex-1 flex flex-col items-center justify-center gap-6
           transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-[1]
 
-          ${!visible
-            ? "opacity-0 scale-75"
-            : corriendo
-              ? "opacity-100 scale-[1.08]"
-              : "opacity-100 scale-100"
+          ${
+            !visible
+              ? "opacity-0 scale-75"
+              : corriendo
+                ? "opacity-100 scale-[1.08]"
+                : "opacity-100 scale-100"
           }`}
       >
         <ContadorSesiones
@@ -406,25 +469,20 @@ function App() {
           corriendo={corriendo}
           onCambiarTiempo={cambiarTiempo}
           onAjustar={ajustarTiempo}
-          onToggle={() => setCorriendo(!corriendo)}
+          onToggle={() => {
+            const nuevoEstado = !corriendo;
+            setCorriendo(nuevoEstado);
+
+            if (audio) {
+              if (nuevoEstado) {
+                audio.play();
+              } else {
+                audio.pause();
+              }
+            }
+          }}
         />
 
-        {spotifyActivo && (
-          <div className="w-full flex justify-center mt-2">
-            <div
-              className="w-[500px] h-[320px] md:h-[360px] bg-black/50 rounded-2xl overflow-hidden border border-white/20"
-            >
-              <iframe
-                src={`https://open.spotify.com/embed/playlist/${playlistActiva || "37i9dQZF1DX8Uebhn9wzrS"
-                  }`}
-                width="100%"
-                height="100%"
-                className="w-full h-full"
-                allow="autoplay; encrypted-media"
-              />
-            </div>
-          </div>
-        )}
         {tareaActiva && (
           <div className="bg-white/10 px-6 py-4 rounded-2xl text-center">
             <p className="text-xs text-white/50 mb-1">Trabajando en</p>
@@ -438,76 +496,86 @@ function App() {
         className={`absolute z-[50] right-15 top-1/2 -translate-y-1/2 w-90 h-[85%]
             flex flex-col gap-4
             transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${corriendo
-            ? "opacity-0 translate-x-40"
-            : visible
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-40"
-          }`}
+            ${
+              corriendo
+                ? "opacity-0 translate-x-40"
+                : visible
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 translate-x-40"
+            }`}
       >
-
-        <div className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col
+        <div
+          className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col
             bg-[rgba(20,20,30,0.45)]
             backdrop-blur-[20px]
             backdrop-saturate-150
             border border-white/10
-            shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+            shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+        >
           <h2 className="mb-3 text-sm tit shrink-0">Vibes</h2>
 
           <div className="flex-1 overflow-auto scroll-invisible">
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { name: "Lofi", id: "37i9dQZF1DX8Uebhn9wzrS", color: "#ec4899" },
-                { name: "Focus", id: "37i9dQZF1DX4sWSpwq3LiO", color: "#3b82f6" },
-                { name: "Chill", id: "37i9dQZF1DX4WYpdgoIcn6", color: "#8b5cf6" },
-                { name: "Energy", id: "37i9dQZF1DX0XUsuxWHRQd", color: "#f59e0b" },
-                { name: "Ambient", id: "37i9dQZF1DX3Ogo9pFvBkY", color: "#10b981" },
-                { name: "Deep", id: "37i9dQZF1DX4E3UdUs7fUx", color: "#a855f7" },
-                { name: "Night", id: "37i9dQZF1DX7qK8ma5wgG1", color: "#64748b" },
-                { name: "Coding", id: "37i9dQZF1DX2sUQwD7tbmL", color: "#06b6d4" },
-              ].map((item) => {
-                const activo = playlistActiva === item.id;
+              {vibes.map((item) => {
+                const activo = vibeActiva === item.name;
 
                 return (
                   <div
-                    key={item.id}
-                    onClick={() => {
-                      setPlaylistActiva(item.id);
-                      setSpotifyActivo(true);
-                    }}
-                    className="relative h-18 rounded-2xl cursor-pointer flex items-center justify-center text-xs overflow-hidden group
-                  border border-white/10"
+                    key={item.name}
+                    onClick={() => reproducirStream(item)}
+                    className="
+            relative h-20 rounded-2xl cursor-pointer 
+            flex items-center justify-center text-xs overflow-hidden group
+            border border-white/10
+            transition-all duration-300
+            hover:scale-[1.05] active:scale-95
+          "
                   >
+                    {/* FONDO GRADIENTE */}
                     <div
                       className="absolute inset-0 rounded-2xl transition-all duration-500"
                       style={{
-                        background: `linear-gradient(135deg, ${item.color}30, transparent)`,
+                        background: `linear-gradient(135deg, ${item.color}40, transparent)`,
                       }}
                     />
 
-                    <div className="absolute inset-0 backdrop-blur-[12px] bg-black/20 rounded-2xl" />
+                    {/* GLASS */}
+                    <div className="absolute inset-0 backdrop-blur-[14px] bg-black/30 rounded-2xl" />
 
+                    {/* GLOW HOVER */}
                     <div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-300"
+                      className="
+              absolute inset-0 rounded-2xl opacity-0 
+              group-hover:opacity-100 transition duration-300
+            "
                       style={{
-                        boxShadow: `0 0 20px ${item.color}`,
+                        boxShadow: `0 0 25px ${item.color}`,
                       }}
                     />
 
-                    {/* ACTIVO */}
+                    {/* ACTIVO (🔥 mejorado) */}
                     {activo && (
-                      <div
-                        className="absolute inset-0 rounded-2xl"
-                        style={{
-                          border: `2px solid ${item.color}`,
-                          boxShadow: `0 0 12px ${item.color}`,
-                        }}
-                      />
+                      <>
+                        <div
+                          className="absolute inset-0 rounded-2xl animate-pulse"
+                          style={{
+                            border: `2px solid ${item.color}`,
+                            boxShadow: `0 0 15px ${item.color}`,
+                          }}
+                        />
+                        <div className="absolute top-1 right-2 text-[10px] text-white/70">
+                          ● LIVE
+                        </div>
+                      </>
                     )}
 
                     {/* TEXTO */}
                     <span
-                      className="relative z-10 font-medium transition-all duration-300 group-hover:scale-110"
+                      className="
+              relative z-10 font-medium text-sm
+              transition-all duration-300 
+              group-hover:scale-110
+            "
                       style={{
                         color: activo ? item.color : "white",
                       }}
@@ -522,19 +590,20 @@ function App() {
         </div>
 
         {/* THEME */}
-        <div className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col
+        <div
+          className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col
             bg-[rgba(20,20,30,0.45)]
             backdrop-blur-[20px]
             backdrop-saturate-150
             border border-white/10
-            shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+            shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+        >
           {/* HEADER */}
           <h2 className="mb-3 text-sm tit shrink-0">Theme</h2>
 
           {/* SCROLL */}
           <div className="flex-1 overflow-auto scroll-invisible">
             <div className="grid grid-cols-2 gap-3.5">
-
               {[
                 defaultBg,
                 "https://i.gifer.com/xK.gif",
@@ -567,7 +636,9 @@ function App() {
                 className="h-18 rounded-2xl cursor-pointer relative overflow-hidden flex items-center justify-center
                 border border-white/10 group"
                 style={{
-                  backgroundImage: fondo?.startsWith("data:") ? `url(${fondo})` : "none",
+                  backgroundImage: fondo?.startsWith("data:")
+                    ? `url(${fondo})`
+                    : "none",
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
@@ -575,7 +646,9 @@ function App() {
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[4px]" />
 
                 <span className="relative z-10 text-lg text-white transition-all duration-300 group-hover:scale-125">
-                  <i className={`fas ${fondo?.startsWith("data:") ? "fa-pen" : "fa-plus"}`} />
+                  <i
+                    className={`fas ${fondo?.startsWith("data:") ? "fa-pen" : "fa-plus"}`}
+                  />
                 </span>
 
                 <input
@@ -591,7 +664,6 @@ function App() {
                   }}
                 />
               </label>
-
             </div>
           </div>
         </div>
