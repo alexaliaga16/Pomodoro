@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Timer from "./components/Timer";
 import ModoSelector from "./components/ModoSelector";
 import ContadorSesiones from "./components/ContadorSesiones";
@@ -22,6 +22,7 @@ const colorPrioridad = {
   media: "bg-amber-400",
   alta: "bg-rose-500",
 };
+
 
 const vibes = [
   {
@@ -56,7 +57,6 @@ const vibes = [
   },
 ];
 
-/* ================= ITEM ================= */
 function TareaItem({
   tarea,
   cambiarEstado,
@@ -76,10 +76,7 @@ function TareaItem({
         transition: "transform 250ms cubic-bezier(0.22,1,0.36,1)",
       }}
       className={`
-        bg-white/10 border border-white/20 rounded-xl p-3
-        flex flex-col gap-2
-        transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-      
+        bg-white/10 border border-white/20 rounded-xl p-3 flex flex-col gap-2 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]      
         ${eliminando
           ? "opacity-0 translate-x-10 scale-95 blur-sm"
           : "opacity-100 translate-x-0 scale-100"
@@ -102,35 +99,21 @@ function TareaItem({
           </span>
           <span
             key={tarea.prioridad}
-            className={`text-[10px] px-2 py-[2px] rounded-full font-medium
-              transition-all duration-300 ease-out
-              animate-[fadeIn_.3s_ease]
-
+            className={`text-[10px] px-2 py-[2px] rounded-full font-medium transition-all duration-300 ease-out animate-[fadeIn_.3s_ease]
               ${tarea.prioridad === "alta" && "bg-rose-500/20 text-rose-400 scale-105"}
               ${tarea.prioridad === "media" && "bg-amber-400/20 text-amber-300 scale-105"}
               ${tarea.prioridad === "baja" && "bg-sky-500/20 text-sky-300 scale-105"}
               `}
           >
-            {tarea.prioridad === "alta"
-              ? "ALTA"
-              : tarea.prioridad === "media"
-                ? "MEDIA"
-                : "BAJA"}
+            {tarea.prioridad === "alta" ? "ALTA" : tarea.prioridad === "media" ? "MEDIA" : "BAJA"}
           </span>
         </div>
 
-        <button
-          onClick={() => eliminar(tarea.id)}
-          className="text-red-400 hover:text-red-300 text-xs"
-        >
+        <button onClick={() => eliminar(tarea.id)} className="text-red-400 hover:text-red-300 text-xs">
           ✕
         </button>
 
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab text-white/50"
-        >
+        <div {...attributes} {...listeners} className="cursor-grab text-white/50">
           ☰
         </div>
       </div>
@@ -171,6 +154,9 @@ function App() {
 
   const [eliminandoId, setEliminandoId] = useState(null);
 
+  const audioRef = useRef(null);
+
+
   const [tiempoGuardado, setTiempoGuardado] = useState({
     focus: 25 * 60,
     shortBreak: 5 * 60,
@@ -205,6 +191,8 @@ function App() {
 
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const [intentos, setIntentos] = useState(0);
+  
   const fondos = [
     defaultBg,
     "https://i.gifer.com/xK.gif",
@@ -308,47 +296,82 @@ function App() {
   useEffect(() => {
     const handleKey = (e) => {
       if (e.code === "Space") {
-        e.preventDefault(); // evita scroll
-        togglePlay();
+        e.preventDefault();
+
+        if (vibeActiva) {
+          togglePlay();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [audio, isPlaying]);
+  }, [audio, isPlaying, vibeActiva]);
+
+  const [estadoStream, setEstadoStream] = useState("idle");
+  // idle | connecting | playing | error
+
+  const retryRef = useRef(null);
 
   const reproducirStream = (vibe) => {
-    if (audio) {
-      audio.pause();
+    setVibeActiva(vibe.name);
+    setIsPlaying(true);
+    setEstadoStream("connecting");
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
     }
 
     const nuevoAudio = new Audio(vibe.url);
     nuevoAudio.loop = true;
     nuevoAudio.volume = 0.5;
 
-    nuevoAudio.play().then(() => {
-      setIsPlaying(true);
-    }).catch(() => {
-      console.log("Autoplay bloqueado");
-    });
+    audioRef.current = nuevoAudio;
 
-    setAudio(nuevoAudio);
-    setVibeActiva(vibe.name);
+    // 🔥 BUFFERING (cuando está cargando)
+    nuevoAudio.onwaiting = () => {
+      setEstadoStream("connecting");
+    };
+
+    // 🔥 CUANDO YA SUENA
+    nuevoAudio.onplaying = () => {
+      setEstadoStream("playing");
+    };
+
+    // 🔥 ERROR → reintento automático
+    const intentarReconexion = () => {
+      setEstadoStream("error");
+
+      clearTimeout(retryRef.current);
+
+      retryRef.current = setTimeout(() => {
+        console.log("Reintentando stream...");
+        reproducirStream(vibe); // 🔁 retry automático
+      }, 3000); // intenta cada 3s
+    };
+
+    nuevoAudio.onerror = intentarReconexion;
+
+    nuevoAudio.play().catch(intentarReconexion);
   };
 
   const togglePlay = () => {
-    if (!audio) return;
+    const current = audioRef.current;
 
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
+    if (!current) return;
+
+    setIsPlaying(prev => !prev);
+
+    if (current.paused) {
+      current.play().catch(() => {
+        setEstadoStream("error");
+      });
     } else {
-      audio.play();
-      setIsPlaying(true);
+      current.pause();
     }
   };
 
-  /* TAREAS */
   const agregarTarea = () => {
     if (!nuevaTarea.trim()) return;
 
@@ -442,48 +465,23 @@ function App() {
   const tareaActiva = tareas.find((t) => t.estado === "pendiente");
 
   return (
-    <div
-      className="relative flex h-screen w-screen text-white overflow-hidden"
-      style={{
-        backgroundImage: `url(${fondo})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
+    <div className="relative flex h-screen w-screen text-white overflow-hidden"
+      style={{ backgroundImage: `url(${fondo})`, backgroundSize: "cover", backgroundPosition: "center", }}>
 
       <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px] backdrop-brightness-90" />
 
       {/* IZQUIERDA */}
       <div
-        className={`absolute z-[100] left-15 top-1/2 -translate-y-1/2 w-90 h-[85%]
-        glass-dark rounded-3xl p-4 flex flex-col
-        transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] 
-        ${corriendo
-            ? "opacity-0 -translate-x-40"
-            : visible
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 -translate-x-40"
-          }`}
-      >
+        className={`absolute z-[100] left-15 top-1/2 -translate-y-1/2 w-90 h-[85%] glass-dark rounded-3xl p-4 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] 
+        ${corriendo ? "opacity-0 -translate-x-40" : visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-40"}`}>
         <h2 className="mb-3 text-sm tit">Tasks</h2>
 
-        <DndContext
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={tareas.map((t) => t.id)}
-            strategy={verticalListSortingStrategy}
-          >
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={tareas.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <div className="flex-1 overflow-auto space-y-2 overflow-hidden">
               {tareas.map((t) => (
                 <TareaItem
-                  key={t.id}
-                  tarea={t}
-                  cambiarEstado={cambiarEstado}
-                  eliminar={eliminarTarea}
-                  cambiarPrioridad={cambiarPrioridad}
-                  eliminando={eliminandoId === t.id}
+                  key={t.id} tarea={t} cambiarEstado={cambiarEstado} eliminar={eliminarTarea} cambiarPrioridad={cambiarPrioridad} eliminando={eliminandoId === t.id}
                 />
               ))}
             </div>
@@ -492,23 +490,13 @@ function App() {
 
         <div className="mt-3 flex gap-2 items-center">
           <input
-            value={nuevaTarea}
-            onChange={(e) => setNuevaTarea(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && agregarTarea()}
-            placeholder="Nueva tarea..."
-            className="flex-1 p-2 px-3 rounded-xl bg-white/10 outline-none text-sm"
-          />
+            value={nuevaTarea} onChange={(e) => setNuevaTarea(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && agregarTarea()} placeholder="Nueva tarea..." className="flex-1 p-2 px-3 rounded-xl bg-white/10 outline-none text-sm" />
 
           <button
-            onClick={agregarTarea}
-            disabled={!nuevaTarea.trim()}
-            className={`w-10 h-10 rounded-full flex items-center justify-center
-              transition-all duration-200 active:scale-90
-              ${nuevaTarea.trim()
-                ? "bg-blue-500 scale-100 opacity-100"
-                : "bg-white/10 scale-90 opacity-50 cursor-not-allowed"
-              }`}
-          >
+            onClick={agregarTarea} disabled={!nuevaTarea.trim()}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90
+              ${nuevaTarea.trim() ? "bg-blue-500 scale-100 opacity-100" : "bg-white/10 scale-90 opacity-50 cursor-not-allowed"}`}>
             <i className="fas fa-paper-plane text-white text-sm"></i>
           </button>
         </div>
@@ -516,29 +504,15 @@ function App() {
 
       {/* CENTRO */}
       <div
-        className={`flex-1 flex flex-col items-center justify-center gap-6
-          transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-[1]
+        className={`flex-1 flex flex-col items-center justify-center gap-6 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-[1]
 
-          ${!visible
-            ? "opacity-0 scale-75"
-            : corriendo
-              ? "opacity-100 scale-[1.08]"
-              : "opacity-100 scale-100"
-          }`}
-      >
-        <ContadorSesiones
-          sesion={sesion}
-          totalSesiones={totalSesiones}
-          onCambiarSesion={cambiarSesion}
-        />
+          ${!visible ? "opacity-0 scale-75" : corriendo ? "opacity-100 scale-[1.08]" : "opacity-100 scale-100"}`}>
+
+        <ContadorSesiones sesion={sesion} totalSesiones={totalSesiones} onCambiarSesion={cambiarSesion} />
 
         <ModoSelector modo={modo} onCambiarModo={setModo} />
 
-        <Timer
-          segundos={segundos}
-          corriendo={corriendo}
-          onCambiarTiempo={cambiarTiempo}
-          onAjustar={ajustarTiempo}
+        <Timer segundos={segundos} corriendo={corriendo} onCambiarTiempo={cambiarTiempo} onAjustar={ajustarTiempo}
           onToggle={() => {
             const nuevoEstado = !corriendo;
             setCorriendo(nuevoEstado);
@@ -555,25 +529,12 @@ function App() {
 
         {(corriendo || vibeActiva) && (
           <div
-            className={`
-            absolute top-[5%] right-[5%] z-[200]
-            transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
+            className={`absolute top-[6%] right-[6%] z-[200] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
           
-            ${corriendo
-                ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 -translate-y-10 scale-90 pointer-events-none"
-              }
-          `}
-          >
+            ${corriendo ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-10 scale-90 pointer-events-none"}`}>
             <Reproductor
-              vibeActiva={vibeActiva}
-              vibes={vibes}
-              onPlay={reproducirStream}
-              favoritos={favoritos}
-              toggleFavorito={toggleFavorito}
-              togglePlay={togglePlay}
-              isPlaying={isPlaying}
-            />
+              vibeActiva={vibeActiva} vibes={vibes} onPlay={reproducirStream} favoritos={favoritos}
+              toggleFavorito={toggleFavorito} togglePlay={togglePlay} isPlaying={isPlaying} />
           </div>
         )}
 
@@ -581,31 +542,39 @@ function App() {
 
       {/* DERECHA */}
       <div
-        className={`absolute z-[50] right-15 top-1/2 -translate-y-1/2 w-90 h-[85%]
-            flex flex-col gap-4
+        className={`absolute z-[50] right-15 top-1/2 -translate-y-1/2 w-90 h-[85%] flex flex-col gap-4
             transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${corriendo
-            ? "opacity-0 translate-x-40"
-            : visible
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-40"
-          }`}
-      >
+            ${corriendo ? "opacity-0 translate-x-40" : visible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-40"}`}>
         <div
           className="flex-1 relative overflow-hidden rounded-3xl py-6 px-4 flex flex-col
-            bg-[rgba(20,20,30,0.45)]
-            backdrop-blur-[20px]
-            backdrop-saturate-150
-            border border-white/10
-            shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
-        >
+            bg-[rgba(20,20,30,0.45)] backdrop-blur-[20px] backdrop-saturate-150 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
           <div className="mb-3 flex items-center justify-between px-4 ">
             <h2 className="text-sm tit">Vibes</h2>
 
             {vibeActiva && (
-              <div className="flex items-center gap-1 text-[13px]  text-white/70 ">
-                <span className="animate-pulse text-red-500 drop-shadow-[0_0_6px_red] ">●</span>
-                En vivo
+              <div className="flex items-center gap-2 text-[13px] text-white/70">
+
+                {estadoStream === "connecting" && (
+                  <>
+                    <i className="fa-solid fa-circle-notch animate-spin text-yellow-400"></i>
+                    Conectando...
+                  </>
+                )}
+
+                {estadoStream === "playing" && (
+                  <>
+                    <span className="animate-pulse text-red-500 drop-shadow-[0_0_6px_red]">●</span>
+                    En vivo
+                  </>
+                )}
+
+                {estadoStream === "error" && (
+                  <>
+                    <i className="fa-solid fa-wifi text-red-400 animate-pulse"></i>
+                    Reconectando...
+                  </>
+                )}
+
               </div>
             )}
           </div>
@@ -613,30 +582,17 @@ function App() {
           <div className="flex-1 overflow-auto scroll-invisible px-2">
             <div className="grid grid-cols-2 gap-3">
               {vibes.map((item) => {
-                const activo = vibeActiva === item.name;
+                const seleccionado = vibeActiva === item.name;
+                const activo = seleccionado && isPlaying;
 
                 return (
                   <div
                     key={item.name}
                     onClick={() => {
-                      if (activo) {
-                        if (audio) audio.pause();
-                        setIsPlaying(false);
-                        setVibeActiva(null);
-                      } else {
-                        reproducirStream(item);
-                      }
+                      reproducirStream(item);
                     }}
-                    className={`
-                      relative h-18 rounded-2xl cursor-pointer overflow-hidden
-                      flex items-center gap-3 px-3
-                      border border-white/10
-                      bg-[rgba(20,20,30,0.5)]
-                      backdrop-blur-[14px]
-                      transition-all duration-300
-                      hover:scale-[1.03] active:scale-95
-                    `}
-                  >
+                    className={`relative h-18 rounded-2xl cursor-pointer overflow-hidden flex
+                     items-center gap-3 px-3 border border-white/10 bg-[rgba(20,20,30,0.5)] backdrop-blur-[14px] transition-all duration-300 hover:scale-[1.03] active:scale-95`}>
                     {activo && (
                       <div
                         className="absolute inset-0 rounded-2xl opacity-12"
@@ -645,7 +601,7 @@ function App() {
                         }}
                       />
                     )}
-                    {/* 🎧 COVER */}
+
                     <div
                       className="w-12 h-12 rounded-xl bg-cover bg-center shrink-0"
                       style={{
@@ -653,7 +609,6 @@ function App() {
                       }}
                     />
 
-                    {/* TEXTO */}
                     <div className="flex-1 overflow-hidden">
                       <p className="text-sm font-medium truncate">
                         {item.name}
@@ -663,8 +618,6 @@ function App() {
                       </p>
                     </div>
 
-
-                    {/* GLOW ACTIVO */}
                     {activo && (
                       <div
                         className="absolute inset-0 rounded-2xl pointer-events-none animate-pulse"
@@ -683,13 +636,8 @@ function App() {
 
         {/* THEME */}
         <div
-          className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col
-            bg-[rgba(20,20,30,0.45)]
-            backdrop-blur-[20px]
-            backdrop-saturate-150
-            border border-white/10
-            shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
-        >
+          className="flex-1 relative overflow-hidden rounded-3xl p-6 flex flex-col bg-[rgba(20,20,30,0.45)] 
+          backdrop-blur-[20px] backdrop-saturate-150 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
           <h2 className="mb-3 text-sm tit shrink-0">Theme</h2>
 
           <div className="flex-1 overflow-auto scroll-invisible">
@@ -712,8 +660,7 @@ function App() {
                       setIndexFondo(i);
                     }}
                     className="h-18 rounded-xl bg-cover bg-center cursor-pointer relative"
-                    style={{ backgroundImage: `url(${img})` }}
-                  >
+                    style={{ backgroundImage: `url(${img})` }}>
                     <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px] rounded-xl" />
                     {activo && (
                       <>
@@ -725,29 +672,16 @@ function App() {
                 );
               })}
 
-              {/* UPLOAD */}
               <label
-                className="h-18 rounded-2xl cursor-pointer relative overflow-hidden flex items-center justify-center
-                border border-white/10 group"
-                style={{
-                  backgroundImage: fondo?.startsWith("data:")
-                    ? `url(${fondo})`
-                    : "none",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
+                className="h-18 rounded-2xl cursor-pointer relative overflow-hidden flex items-center justify-center border border-white/10 group"
+                style={{ backgroundImage: fondo?.startsWith("data:") ? `url(${fondo})` : "none", backgroundSize: "cover", backgroundPosition: "center", }}>
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[4px]" />
 
                 <span className="relative z-10 text-lg text-white transition-all duration-300 group-hover:scale-125">
-                  <i
-                    className={`fas ${fondo?.startsWith("data:") ? "fa-pen" : "fa-plus"}`}
-                  />
+                  <i className={`fas ${fondo?.startsWith("data:") ? "fa-pen" : "fa-plus"}`} />
                 </span>
 
-                <input
-                  type="file"
-                  className="hidden"
+                <input type="file" className="hidden"
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {

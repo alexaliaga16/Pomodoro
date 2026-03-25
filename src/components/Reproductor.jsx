@@ -55,7 +55,6 @@ function Reproductor({
                     }}
                 />
 
-                {/* 🎧 COVER */}
                 <div
                     key={actual.name + "-img"}
                     className="relative z-10 w-[95px] my-[12px] ml-[12px] rounded-2xl bg-cover bg-center shrink-0 transition-all duration-500"
@@ -64,10 +63,7 @@ function Reproductor({
                     }}
                 />
 
-                <div
-                    key={actual.name}
-                    className="relative z-10 flex-1 flex flex-col justify-between px-4 py-4 animate-[fadeSlide_.4s_ease]"
-                >
+                <div key={actual.name} className="relative z-10 flex-1 flex flex-col justify-between px-4 py-4 animate-[fadeSlide_.4s_ease]">
                     <div>
                         <h3 className="text-sm font-semibold">
                             {actual.name} Radio
@@ -79,21 +75,18 @@ function Reproductor({
 
                     <div className="flex items-center gap-2">
                         <div className="flex-1 h-[3px] bg-white/10 rounded-full overflow-hidden relative">
+                            <div className="absolute inset-0" style={{ background: actual.color }} />
                             <div
-                                className="absolute inset-0"
-                                style={{ background: actual.color }}
+                                className="absolute top-0 right-0 h-full bg-black animate-[liveEdge_2s_ease-in-out_infinite]"
+                                style={{
+                                    animationPlayState: isPlaying ? "running" : "paused",
+                                }}
                             />
-                            <div className="absolute top-0 right-0 h-full bg-black animate-[liveEdge_2s_ease-in-out_infinite]" />
+
                         </div>
 
-                        <button
-                            onClick={() => toggleFavorito(actual.name)}
-                            className="text-white/60 hover:text-yellow-400 transition"
-                        >
-                            <i
-                                className={`fas ${esFavorito ? "fa-star text-yellow-400" : "fa-star"
-                                    }`}
-                            />
+                        <button onClick={() => toggleFavorito(actual.name)} className="text-white/60 hover:text-yellow-400 transition">
+                            <i className={`fas ${esFavorito ? "fa-star text-yellow-400" : "fa-star"}`} />
                         </button>
                     </div>
 
@@ -104,29 +97,16 @@ function Reproductor({
                                     vibes[(index - 1 + vibes.length) % vibes.length];
                                 onPlay(prev);
                             }}
-                            className="hover:text-white transition"
-                        >
+                            className="hover:text-white transition">
                             <i className="fas fa-backward"></i>
                         </button>
 
-                        <button
-                            onClick={togglePlay}
-                            className={`text-white text-lg scale-110 hover:scale-125 transition ${isPlaying ? "animate-pulse" : ""
-                                }`}
-                        >
-                            <i
-                                className={`fas ${isPlaying ? "fa-pause" : "fa-play"
-                                    }`}
-                            ></i>
+                        <button onClick={togglePlay} className={`text-white text-lg scale-110 hover:scale-125 transition ${isPlaying ? "animate-pulse" : ""}`}>
+                            <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"}`}></i>
                         </button>
 
                         <button
-                            onClick={() => {
-                                const next = vibes[(index + 1) % vibes.length];
-                                onPlay(next);
-                            }}
-                            className="hover:text-white transition"
-                        >
+                            onClick={() => { const next = vibes[(index + 1) % vibes.length]; onPlay(next); }} className="hover:text-white transition">
                             <i className="fas fa-forward"></i>
                         </button>
                     </div>
