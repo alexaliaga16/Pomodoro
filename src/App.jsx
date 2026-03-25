@@ -148,7 +148,7 @@ function TareaItem({
 
 /* ================= APP ================= */
 function App() {
-  const defaultBg = "src/assets/Image_20260320_141153.png";
+  const defaultBg = "/fondo.png";
 
   const [modo, setModo] = useState("focus");
 
@@ -187,12 +187,15 @@ function App() {
 
   const [visible, setVisible] = useState(false);
 
-  const [favoritos, setFavoritos] = useState([]);
+  const [favoritos, setFavoritos] = useState(() => {
+    const guardado = localStorage.getItem("favoritos");
+    return guardado ? JSON.parse(guardado) : [];
+  });
 
   const [isPlaying, setIsPlaying] = useState(false);
 
   const [intentos, setIntentos] = useState(0);
-  
+
   const fondos = [
     defaultBg,
     "https://i.gifer.com/xK.gif",
@@ -313,10 +316,23 @@ function App() {
 
   const retryRef = useRef(null);
 
+  const currentStreamRef = useRef(null);
+
+  const errorHandledRef = useRef(false);
+
   const reproducirStream = (vibe) => {
+    console.log("🎧 NUEVO STREAM:", vibe.name);
+
+    clearTimeout(retryRef.current);
+    errorHandledRef.current = false; // 👈 reset flag
+
     setVibeActiva(vibe.name);
     setIsPlaying(true);
     setEstadoStream("connecting");
+
+    console.log("🔁 Intentos actuales (ANTES):", intentos);
+
+    currentStreamRef.current = vibe.url;
 
     if (audioRef.current) {
       audioRef.current.pause();
@@ -329,31 +345,52 @@ function App() {
 
     audioRef.current = nuevoAudio;
 
-    // 🔥 BUFFERING (cuando está cargando)
-    nuevoAudio.onwaiting = () => {
-      setEstadoStream("connecting");
-    };
-
-    // 🔥 CUANDO YA SUENA
     nuevoAudio.onplaying = () => {
+      console.log("✅ STREAM OK");
+      if (currentStreamRef.current !== vibe.url) return;
       setEstadoStream("playing");
     };
 
-    // 🔥 ERROR → reintento automático
     const intentarReconexion = () => {
+      if (errorHandledRef.current) {
+        console.log("🚫 Error ya manejado, ignorando duplicado");
+        return;
+      }
+
+      errorHandledRef.current = true; // 👈 bloquea duplicados
+
+      console.log("❌ ERROR STREAM");
+
+      if (currentStreamRef.current !== vibe.url) return;
+
       setEstadoStream("error");
 
-      clearTimeout(retryRef.current);
+      setIntentos((prev) => {
+        console.log("🔁 Intento número:", prev);
 
-      retryRef.current = setTimeout(() => {
-        console.log("Reintentando stream...");
-        reproducirStream(vibe); // 🔁 retry automático
-      }, 3000); // intenta cada 3s
+        if (prev >= 1) {
+          console.log("🛑 NO MÁS REINTENTOS");
+          return prev;
+        }
+
+        console.log("⏳ REINTENTANDO EN 3s...");
+
+        retryRef.current = setTimeout(() => {
+          console.log("🔄 REINTENTO EJECUTADO");
+          if (currentStreamRef.current !== vibe.url) return;
+          reproducirStream(vibe);
+        }, 3000);
+
+        return prev + 1;
+      });
     };
 
     nuevoAudio.onerror = intentarReconexion;
 
-    nuevoAudio.play().catch(intentarReconexion);
+    nuevoAudio.play().catch((err) => {
+      console.log("❌ play() falló:", err);
+      intentarReconexion();
+    });
   };
 
   const togglePlay = () => {
@@ -361,14 +398,17 @@ function App() {
 
     if (!current) return;
 
-    setIsPlaying(prev => !prev);
-
     if (current.paused) {
-      current.play().catch(() => {
+      current.play().then(() => {
+        setIsPlaying(true);
+        setEstadoStream("playing");
+      }).catch(() => {
         setEstadoStream("error");
       });
     } else {
       current.pause();
+      setIsPlaying(false);
+      setEstadoStream("idle");
     }
   };
 
@@ -393,11 +433,14 @@ function App() {
   };
 
   const toggleFavorito = (name) => {
-    setFavoritos((prev) =>
-      prev.includes(name)
+    setFavoritos((prev) => {
+      const nuevo = prev.includes(name)
         ? prev.filter((f) => f !== name)
-        : [...prev, name]
-    );
+        : [...prev, name];
+
+      localStorage.setItem("favoritos", JSON.stringify(nuevo));
+      return nuevo;
+    });
   };
 
   const eliminarTarea = (id) => {
@@ -464,6 +507,14 @@ function App() {
 
   const tareaActiva = tareas.find((t) => t.estado === "pendiente");
 
+  const vibesOrdenadas = [...vibes].sort((a, b) => {
+    const aFav = favoritos.includes(a.name);
+    const bFav = favoritos.includes(b.name);
+
+    if (aFav === bFav) return 0;
+    return aFav ? -1 : 1;
+  });
+
   return (
     <div className="relative flex h-screen w-screen text-white overflow-hidden"
       style={{ backgroundImage: `url(${fondo})`, backgroundSize: "cover", backgroundPosition: "center", }}>
@@ -472,13 +523,13 @@ function App() {
 
       {/* IZQUIERDA */}
       <div
-        className={`absolute z-[100] left-15 top-1/2 -translate-y-1/2 w-90 h-[85%] glass-dark rounded-3xl p-4 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] 
+        className={`absolute z-[100] left-15 top-1/2 -translate-y-1/2 w-90 h-[80%] glass-dark rounded-3xl p-4 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] 
         ${corriendo ? "opacity-0 -translate-x-40" : visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-40"}`}>
         <h2 className="mb-3 text-sm tit">Tasks</h2>
 
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={tareas.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-            <div className="flex-1 overflow-auto space-y-2 overflow-hidden">
+            <div className="flex-1 overflow-auto space-y-2 overflow-hidden ">
               {tareas.map((t) => (
                 <TareaItem
                   key={t.id} tarea={t} cambiarEstado={cambiarEstado} eliminar={eliminarTarea} cambiarPrioridad={cambiarPrioridad} eliminando={eliminandoId === t.id}
@@ -542,7 +593,7 @@ function App() {
 
       {/* DERECHA */}
       <div
-        className={`absolute z-[50] right-15 top-1/2 -translate-y-1/2 w-90 h-[85%] flex flex-col gap-4
+        className={`absolute z-[50] right-15 top-1/2 -translate-y-1/2 w-95 h-[80%] flex flex-col gap-4
             transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
             ${corriendo ? "opacity-0 translate-x-40" : visible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-40"}`}>
         <div
@@ -569,10 +620,17 @@ function App() {
                 )}
 
                 {estadoStream === "error" && (
-                  <>
-                    <i className="fa-solid fa-wifi text-red-400 animate-pulse"></i>
-                    Reconectando...
-                  </>
+                  intentos < 1 ? (
+                    <>
+                      <i className="fa-solid fa-rotate animate-spin text-yellow-400"></i>
+                      Reconectando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-triangle-exclamation text-red-400"></i>
+                      Sin conexión
+                    </>
+                  )
                 )}
 
               </div>
@@ -581,7 +639,7 @@ function App() {
 
           <div className="flex-1 overflow-auto scroll-invisible px-2">
             <div className="grid grid-cols-2 gap-3">
-              {vibes.map((item) => {
+              {vibesOrdenadas.map((item) => {
                 const seleccionado = vibeActiva === item.name;
                 const activo = seleccionado && isPlaying;
 
@@ -589,10 +647,18 @@ function App() {
                   <div
                     key={item.name}
                     onClick={() => {
-                      reproducirStream(item);
+                      const misma = vibeActiva === item.name;
+
+                      if (misma) {
+                        togglePlay();
+                      } else {
+                        setIntentos(0);
+                        reproducirStream(item);
+                      }
                     }}
-                    className={`relative h-18 rounded-2xl cursor-pointer overflow-hidden flex
-                     items-center gap-3 px-3 border border-white/10 bg-[rgba(20,20,30,0.5)] backdrop-blur-[14px] transition-all duration-300 hover:scale-[1.03] active:scale-95`}>
+                    className="group relative h-18 rounded-2xl cursor-pointer overflow-hidden flex
+                      items-center gap-3 px-3 border border-white/10 bg-[rgba(20,20,30,0.5)]
+                      backdrop-blur-[14px] transition-all duration-300 hover:scale-[1.03] active:scale-95">
                     {activo && (
                       <div
                         className="absolute inset-0 rounded-2xl opacity-12"
@@ -617,6 +683,34 @@ function App() {
                         Live radio
                       </p>
                     </div>
+
+                    {/* ⭐ FAVORITO */}
+                    {/* ⭐ FAVORITO */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorito(item.name);
+                      }}
+                      className={`
+                        absolute top-2 right-2 z-20
+                        flex items-center justify-center
+                        w-6 h-6 rounded-full
+                        transition-all duration-300
+
+                        ${favoritos.includes(item.name)
+                          ? "bg-yellow-400/20 backdrop-blur-md scale-100 opacity-100"
+                          : "opacity-0 scale-75 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0"}
+                          `}>
+                      <i
+                        className={`
+                          fas fa-star text-[11px]
+                          transition-all duration-300
+                          ${favoritos.includes(item.name)
+                            ? "text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]"
+                            : "text-white/60 hover:text-yellow-300"}
+                          `}
+                      />
+                    </button>
 
                     {activo && (
                       <div
