@@ -1,52 +1,24 @@
 @import "tailwindcss";
 
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pushDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+/* ================= BASE ================= */
 
 html,
 body {
-  overflow: hidden;
-  font-family: 'Poppins', sans-serif;
-
+  height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden;
 }
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= TEXT ================= */
 
 .text-xs {
   font-size: 14px;
-  line-height: var(--tw-leading, var(--text-xs--line-height));
   font-weight: 550;
 }
 
@@ -56,104 +28,221 @@ body {
   font-weight: 600;
 }
 
-@keyframes spin-slow {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 4s linear infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.6;
-  }
-
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-body.pulse {
-  transform: scale(1.002);
-  transition: transform 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.scroll-invisible {
-  scrollbar-width: none;
-  -ms-overflow-style: none;   
-}
-
-.scroll-invisible::-webkit-scrollbar {
-  display: none; 
-}
+/* ================= GLASS ================= */
 
 .glass-dark {
   background: rgba(15, 15, 20, 0.45);
   backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.08);  
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-@keyframes liveEdge {
-  0% {
-    width: 3%;
+/* ================= SCROLL GLOBAL ================= */
+
+*::-webkit-scrollbar {
+  width: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.1));
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.6),
+      rgba(255, 255, 255, 0.2));
+}
+
+/* ================= SCROLL PANELES (INVISIBLE) ================= */
+
+.panel-left,
+.panel-right {
+  overflow-y: auto;
+  scrollbar-width: none;
+  min-height: 0;
+  /* 🔥 CLAVE */
+}
+
+.panel-left::-webkit-scrollbar,
+.panel-right::-webkit-scrollbar {
+  display: none;
+}
+
+/* ================= 📱 MOBILE ================= */
+
+@media (max-width: 768px) {
+
+  .app-container {
+    padding: 16px;
+    gap: 16px;
   }
-  50% {
-    width: 1%;
+
+  /* TIMER ARRIBA */
+  .panel-center {
+    order: -1;
   }
-  70% {
-    width: 3%;
+
+  /* PANELS EN COLUMNA */
+  .panels-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
-  100% {
-    width: 2%;
+
+  .panel-left,
+  .panel-right {
+    position: relative !important;
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
   }
 }
 
-@keyframes fadeSlide {
-  0% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-    filter: blur(6px);
+/* ================= 💻 LAPTOP ================= */
+@media (min-width: 769px) and (max-width: 1400px) {
+
+  /* CONTENEDOR PRINCIPAL */
+  .app-container {
+    display: flex !important;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+    height: 100vh;
+    overflow: hidden;
   }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+
+  .bot {
+    gap: 2px !important;
   }
+
+  /* 🔝 TIMER ARRIBA */
+  .panel-center {
+    order: -1;
+    flex-shrink: 0;
+    margin-top: 10px;
+  }
+
+  .focus-mode {
+    position: absolute !important;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* 🔥 animación */
+    transform: translateY(0) scale(1.05);
+    transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* estado inicial (cuando NO está corriendo) */
+  .panel-center {
+    transform: translateY(40px);
+    /* 🔥 desde abajo */
+  }
+
+  .center-anim {
+    transform: none !important;
+    /* 🔥 mata el scale */
+  }
+
+  .panel-center {
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 🔲 CONTENEDOR DE PANELES */
+  .panels-row {
+    margin-top: 150px;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  /* 🧱 RESET TOTAL (ESTO ES LO IMPORTANTE) */
+  .panel-left,
+  .panel-right {
+    position: relative !important;
+
+    /* 🔥 BORRA TODO lo que los movía */
+    top: unset !important;
+    left: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+
+    transform: none !important;
+
+    width: auto !important;
+    height: 100% !important;
+
+    margin: 0 !important;
+  }
+
+  /* 📌 IZQUIERDA */
+  .panel-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* SCROLL */
+  .panel-left .list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* 📌 DERECHA */
+  .panel-right {
+    flex: 2;
+
+    display: flex;
+    flex-direction: row;
+    /* 🔥 2 columnas */
+    gap: 20px;
+
+    min-height: 0;
+  }
+
+  /* 📦 COLUMNAS INTERNAS */
+  .panel-right>div {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* SCROLL DERECHO */
+  .panel-right .scroll-invisible {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+/* ================= GENERAL FIX ================= */
+
+.panels-row {
+  width: 100%;
+}
+
+/* evitar bugs raros */
+.over {
+  height: 100% !important;
 }

@@ -15,25 +15,6 @@ function Reproductor({
     const index = vibes.findIndex((v) => v.name === vibeActiva);
     const esFavorito = favoritos?.includes(actual.name);
 
-    useEffect(() => {
-        const handleKey = (e) => {
-            if (!actual) return;
-
-            if (e.code === "ArrowUp") {
-                const prev = vibes[(index - 1 + vibes.length) % vibes.length];
-                onPlay(prev);
-            }
-
-            if (e.code === "ArrowDown") {
-                const next = vibes[(index + 1) % vibes.length];
-                onPlay(next);
-            }
-        };
-
-        window.addEventListener("keydown", handleKey);
-        return () => window.removeEventListener("keydown", handleKey);
-    }, [actual, index, vibes, onPlay]);
-
     return (
         <div className="w-[360px] max-w-full p-1.5">
             <div className="h-[95px] rounded-3xl overflow-hidden flex relative border border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.6)]">

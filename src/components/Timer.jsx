@@ -26,7 +26,7 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
     }
 
     return (
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col bot items-center gap-8">
 
             <div className="flex items-center gap-8">
 
