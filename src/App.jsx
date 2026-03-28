@@ -806,6 +806,12 @@ function App() {
             const nuevoEstado = !corriendo;
             setCorriendo(nuevoEstado);
 
+            if (nuevoEstado) {
+              setComienzo(Date.now());
+            } else {
+              setComienzo(null);
+            }
+
             if (audio) {
               if (nuevoEstado) {
                 audio.play();
