@@ -1,6 +1,6 @@
 export const vibes = [
   { name: "Lofi",   url: "https://stream.zeno.fm/0vgy8qv3feruv", color: "#ec4899" },
-  { name: "Focus",  url: "https://stream.zeno.fm/0r0xa792kwzuv", color: "#3b82f6" },
+  { name: "Focus",  url: "https://stream.zeno.fm/3m0kdgcpq18uv", color: "#3b82f6" },
   { name: "Chill",  url: "https://stream.zeno.fm/8s5u5tpdtwzuv", color: "#8b5cf6" },
   { name: "Energy", url: "https://stream.zeno.fm/7b9v0h2zzwzuv", color: "#f59e0b" },
   { name: "Ambient",url: "https://stream.zeno.fm/4wqre23fytzuv", color: "#10b981" },
