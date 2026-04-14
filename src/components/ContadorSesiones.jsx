@@ -1,7 +1,7 @@
 import GlassButton from "./ui/GlassButton";
 import { useState } from "react";
 
-function ContadorSesiones({ sesion, totalSesiones, onCambiarSesion }) {
+function ContadorSesiones({ sesion, totalSesiones, onCambiarSesion, accentRgb, accentStrength }) {
 
 
     const [editando, setEditando] = useState(false)
@@ -19,7 +19,7 @@ function ContadorSesiones({ sesion, totalSesiones, onCambiarSesion }) {
     }
 
     return (
-        <div className={'flex justify-center'}>
+        <div className={'flex w-full justify-center px-3'}>
             {editando ? (
                 <input
                     autoFocus
@@ -32,14 +32,18 @@ function ContadorSesiones({ sesion, totalSesiones, onCambiarSesion }) {
                     }}
                     onBlur={confirmarEdicion}
                     onKeyDown={e => e.key === 'Enter' && confirmarEdicion()}
-                    className="text-xl font-[Source_Code_Pro] font-bold bg-transparent text-center w-20 outline-none border-b-2 border-white/50"
+                    className="w-20 border-b-2 border-white/50 bg-transparent text-center text-lg font-[Source_Code_Pro] font-bold outline-none sm:text-xl"
 
                 />
             ) : (
                 <GlassButton
                     onClick={abrirEditor}
-                    className={'font-[Source_Code_Pro] px-8 py-2 text-sm font-bold'}>
-                    SESSION #{sesion} / {totalSesiones}
+                    theme="dark"
+                    accentRgb={accentRgb}
+                    accentStrength={accentStrength}
+                    style={{ fontFamily: "'VT323', monospace" }}
+                    className={'w-full max-w-fit px-4 py-2 text-center text-[22px] leading-none tracking-[0.08em] sm:px-6 sm:text-[22px]'}>
+                    Session #{sesion} / {totalSesiones}
                 </GlassButton>
             )}
         </div>

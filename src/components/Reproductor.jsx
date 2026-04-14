@@ -1,104 +1,105 @@
-import { useEffect } from "react";
-
 function Reproductor({
-    vibeActiva,
-    vibes,
-    onPlay,
-    favoritos,
-    toggleFavorito,
-    togglePlay,
-    isPlaying,
+  vibeActiva,
+  vibes,
+  onPlay,
+  favoritos,
+  toggleFavorito,
+  togglePlay,
+  isPlaying,
 }) {
-    const actual = vibes.find((v) => v.name === vibeActiva);
-    if (!actual) return null;
+  const actual = vibes.find((v) => v.name === vibeActiva);
+  if (!actual) return null;
 
-    const index = vibes.findIndex((v) => v.name === vibeActiva);
-    const esFavorito = favoritos?.includes(actual.name);
+  const index = vibes.findIndex((v) => v.name === vibeActiva);
+  const esFavorito = favoritos?.includes(actual.name);
 
-    return (
-        <div className="w-[360px] max-w-full p-1.5">
-            <div className="h-[95px] rounded-3xl overflow-hidden flex relative border border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
+  return (
+    <div className="w-[min(100%,425px)] p-1.5">
+      <div className="relative flex h-[120px] overflow-hidden rounded-3xl border border-white/20 shadow-[0_14px_50px_rgba(0,0,0,0.6)]">
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-500"
+          style={{
+            backgroundImage: `linear-gradient(135deg, rgba(var(--accent-rgb), calc(0.34 * var(--accent-strength))) 0%, rgba(10,14,20,0.28) 45%, rgba(10,14,20,0.82) 100%), url(${actual.image || "/hero.png"})`,
+          }}
+        />
 
-                <div
-                    className="absolute inset-0 z-0 transition-all duration-500"
-                    style={{
-                        background: actual.color,
-                        opacity: 0.18,
-                    }}
-                />
+        <div className="absolute inset-0 z-0 backdrop-blur-[14px]" />
 
-                <div className="absolute inset-0 backdrop-blur-[16px] z-0" />
+        <div
+          className="absolute inset-0 z-0 opacity-35 transition-all duration-500"
+          style={{ boxShadow: `inset 0 0 50px rgba(var(--accent-rgb), calc(0.42 * var(--accent-strength)))` }}
+        />
 
-                <div
-                    className="absolute inset-0 z-0 opacity-30 transition-all duration-500"
-                    style={{
-                        boxShadow: `inset 0 0 50px ${actual.color}`,
-                    }}
-                />
+        <div className="relative z-10 flex flex-1 items-center gap-4 px-4 py-4 animate-[fadeSlide_.4s_ease]">
+          <div
+            className="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-2xl border border-white/14 shadow-[0_12px_28px_rgba(0,0,0,0.28)]"
+            style={{
+              backgroundImage: `linear-gradient(135deg, rgba(var(--accent-rgb), calc(0.34 * var(--accent-strength))) 0%, rgba(10,14,20,0.18) 100%), url(${actual.image || "/hero.png"})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <div className="h-full w-full bg-black/10 backdrop-blur-[0.5px]" />
+          </div>
 
-                <div
-                    key={actual.name + "-img"}
-                    className="relative z-10 w-[70px] my-[10px] ml-[10px] rounded-2xl bg-cover bg-center shrink-0 transition-all duration-500"
-                    style={{
-                        backgroundImage: `url(https://picsum.photos/300?random=${actual.name})`,
-                    }}
-                />
+          <div className="flex flex-1 flex-col justify-between self-stretch">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">{actual.name}</h3>
+                <p className="text-[11px] text-white/55">Live stream - Focus vibes</p>
+              </div>
 
-                <div className="relative z-10 flex-1 flex flex-col justify-between px-3 py-3 animate-[fadeSlide_.4s_ease]">
-                    <div>
-                        <h3 className="text-xs font-semibold">
-                            {actual.name} Radio
-                        </h3>
-                        <p className="text-[10px] text-white/50">
-                            Live stream • Focus vibes
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 h-[2px] bg-white/10 rounded-full overflow-hidden relative">
-                            <div className="absolute inset-0" style={{ background: actual.color }} />
-                            <div
-                                className="absolute top-0 right-0 h-full bg-black animate-[liveEdge_2s_ease-in-out_infinite]"
-                                style={{
-                                    animationPlayState: isPlaying ? "running" : "paused",
-                                }}
-                            />
-                        </div>
-
-                        <button onClick={() => toggleFavorito(actual.name)} className="text-white/60 hover:text-yellow-400 transition text-xs">
-                            <i className={`fas ${esFavorito ? "fa-star text-yellow-400" : "fa-star"}`} />
-                        </button>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-4 text-white/70 text-sm">
-                        <button
-                            onClick={() => {
-                                const prev = vibes[(index - 1 + vibes.length) % vibes.length];
-                                onPlay(prev);
-                            }}
-                            className="hover:text-white transition">
-                            <i className="fas fa-backward"></i>
-                        </button>
-
-                        <button
-                            onClick={togglePlay}
-                            className={`text-white scale-105 hover:scale-115 transition ${isPlaying ? "animate-pulse" : ""}`}>
-                            <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"}`}></i>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                const next = vibes[(index + 1) % vibes.length];
-                                onPlay(next);
-                            }}
-                            className="hover:text-white transition">
-                            <i className="fas fa-forward"></i>
-                        </button>
-                    </div>
-                </div>
+              <button onClick={() => toggleFavorito(actual.name)} className="text-xs text-white/60 transition hover:text-yellow-400">
+                <i className={`fas ${esFavorito ? "fa-star text-yellow-400" : "fa-star"}`} />
+              </button>
             </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative h-[2px] flex-1 overflow-hidden rounded-full bg-white/10">
+                <div className="absolute inset-0" style={{ background: `rgb(var(--accent-rgb))` }} />
+                <div
+                  className="absolute top-0 right-0 h-full bg-black animate-[liveEdge_2s_ease-in-out_infinite]"
+                  style={{ animationPlayState: isPlaying ? "running" : "paused" }}
+                />
+              </div>
+              <span className="rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-[0.18em] text-white/70" style={{ borderColor: `rgba(var(--accent-rgb), 0.55)` }}>
+                Live
+              </span>
+            </div>
+
+            <div className="flex items-center justify-center gap-5 text-base text-white/70">
+              <button
+                onClick={() => {
+                  const prev = vibes[(index - 1 + vibes.length) % vibes.length];
+                  onPlay(prev);
+                }}
+                className="transition hover:text-white"
+              >
+                <i className="fas fa-backward" />
+              </button>
+
+              <button
+                onClick={togglePlay}
+                className={`scale-105 text-white transition hover:scale-115 ${isPlaying ? "animate-pulse" : ""}`}
+              >
+                <i className={`fas ${isPlaying ? "fa-pause" : "fa-play"}`} />
+              </button>
+
+              <button
+                onClick={() => {
+                  const next = vibes[(index + 1) % vibes.length];
+                  onPlay(next);
+                }}
+                className="transition hover:text-white"
+              >
+                <i className="fas fa-forward" />
+              </button>
+            </div>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default Reproductor;
