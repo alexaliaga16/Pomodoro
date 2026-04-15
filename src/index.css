@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@property --accent-r {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 255;
+}
+
+@property --accent-g {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 255;
+}
+
+@property --accent-b {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 255;
+}
+
+@property --accent-strength {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 html,
 body,
 #root {
@@ -18,6 +42,47 @@ body {
   align-items: center;
   gap: clamp(18px, 2.2vw, 30px);
   padding: clamp(16px, 2vw, 28px);
+  overflow: hidden;
+  background: #05070d;
+  transition:
+    --accent-r 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    --accent-g 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    --accent-b 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    --accent-strength 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-background {
+  position: absolute;
+  inset: -18px;
+  background-size: cover;
+  background-position: center;
+  will-change: opacity, transform, filter;
+  pointer-events: none;
+}
+
+.app-background-previous {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.app-background-current {
+  animation: backgroundReveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes backgroundReveal {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+    filter: blur(10px) saturate(0.86) brightness(0.82);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.02);
+    filter: blur(0) saturate(1) brightness(1);
+  }
 }
 
 .text-xs {
@@ -33,24 +98,30 @@ body {
 
 .glass-dark {
   background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), calc(0.14 * var(--accent-strength))) 0%, rgba(var(--accent-rgb), calc(0.06 * var(--accent-strength))) 28%, rgba(28, 30, 40, 0.34) 100%),
+    linear-gradient(180deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.14 * var(--accent-strength))) 0%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.06 * var(--accent-strength))) 28%, rgba(28, 30, 40, 0.34) 100%),
     rgba(28, 30, 40, 0.36);
   backdrop-filter: blur(18px) saturate(140%);
   box-shadow:
-    0 0 0 1px rgba(var(--accent-rgb), calc(0.24 * var(--accent-strength))),
-    0 0 24px rgba(var(--accent-rgb), calc(0.24 * var(--accent-strength))),
+    0 0 0 1px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.24 * var(--accent-strength))),
+    0 0 24px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.24 * var(--accent-strength))),
     0 8px 32px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 18px 32px rgba(var(--accent-rgb), calc(0.08 * var(--accent-strength)));
+    inset 0 18px 32px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.08 * var(--accent-strength)));
+  transition:
+    background 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .neon-panel {
   position: relative;
   box-shadow:
-    0 0 0 1px rgba(var(--accent-rgb), calc(0.24 * var(--accent-strength))),
-    0 0 34px rgba(var(--accent-rgb), calc(0.24 * var(--accent-strength))),
+    0 0 0 1px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.24 * var(--accent-strength))),
+    0 0 34px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.24 * var(--accent-strength))),
     0 12px 38px rgba(0, 0, 0, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .neon-panel::after {
@@ -58,12 +129,15 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1px solid rgba(var(--accent-rgb), 0);
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0);
   box-shadow:
-    0 0 0 rgba(var(--accent-rgb), 0),
-    0 0 0 rgba(var(--accent-rgb), 0),
-    inset 0 0 10px rgba(var(--accent-rgb), calc(0.12 * var(--accent-strength)));
+    0 0 0 rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0),
+    0 0 0 rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0),
+    inset 0 0 10px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.12 * var(--accent-strength)));
   pointer-events: none;
+  transition:
+    border-color 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .neon-panel::before {
@@ -73,13 +147,14 @@ body {
   border-radius: inherit;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(var(--accent-rgb), calc(0.18 * var(--accent-strength))) 0%,
-    rgba(var(--accent-rgb), calc(0.1 * var(--accent-strength))) 35%,
+    rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.18 * var(--accent-strength))) 0%,
+    rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.1 * var(--accent-strength))) 35%,
     transparent 72%
   );
   filter: blur(16px);
   opacity: 0.9;
   pointer-events: none;
+  transition: background 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .panel-left,
@@ -89,7 +164,6 @@ body {
   right: auto !important;
   bottom: auto !important;
   left: auto !important;
-  transform: none !important;
   width: 100% !important;
   min-height: 0;
 }
@@ -102,6 +176,16 @@ body {
   flex-direction: column;
   height: min(82vh, 840px) !important;
   max-width: 370px;
+}
+
+.panel-left.neon-panel {
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .panel-right {
@@ -163,16 +247,19 @@ body {
   border-radius: 22px;
   padding: 14px 16px;
   background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), calc(0.22 * var(--accent-strength))) 0%, rgba(var(--accent-rgb), calc(0.08 * var(--accent-strength))) 30%, rgba(28, 30, 40, 0.42) 100%),
+    linear-gradient(180deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.22 * var(--accent-strength))) 0%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.08 * var(--accent-strength))) 30%, rgba(28, 30, 40, 0.42) 100%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
     rgba(28, 30, 40, 0.46);
   backdrop-filter: blur(20px) saturate(140%);
   box-shadow:
-    0 0 0 1px rgba(var(--accent-rgb), calc(0.22 * var(--accent-strength))),
+    0 0 0 1px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.22 * var(--accent-strength))),
     0 12px 34px rgba(0, 0, 0, 0.32),
-    0 0 28px rgba(var(--accent-rgb), calc(0.18 * var(--accent-strength))),
+    0 0 28px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.18 * var(--accent-strength))),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   min-width: min(86vw, 280px);
+  transition:
+    background 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .volume-hud-shell::after {
@@ -182,8 +269,9 @@ body {
   width: 140px;
   height: 140px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), calc(0.32 * var(--accent-strength))), transparent 70%);
+  background: radial-gradient(circle, rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.32 * var(--accent-strength))), transparent 70%);
   pointer-events: none;
+  transition: background 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .volume-icon-shell {
@@ -193,14 +281,18 @@ body {
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  border: 1px solid rgba(var(--accent-rgb), calc(0.26 * var(--accent-strength)));
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.26 * var(--accent-strength)));
   background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), calc(0.18 * var(--accent-strength))), rgba(255, 255, 255, 0.04)),
+    linear-gradient(180deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.18 * var(--accent-strength))), rgba(255, 255, 255, 0.04)),
     rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.92);
   box-shadow:
-    0 0 18px rgba(var(--accent-rgb), calc(0.18 * var(--accent-strength))),
+    0 0 18px rgba(var(--accent-r), var(--accent-g), var(--accent-b), calc(0.18 * var(--accent-strength))),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    background 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 650ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .mute-indicator {
@@ -244,6 +336,58 @@ body {
     box-shadow:
       0 0 30px rgba(255, 90, 90, 0.26),
       inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+}
+
+.player-station-backdrop {
+  animation: stationBackdropIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.player-station-art {
+  animation: stationArtIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: 50% 50%;
+}
+
+.player-station-copy {
+  animation: stationCopyIn 460ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both;
+}
+
+@keyframes stationBackdropIn {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+    filter: saturate(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: saturate(1);
+  }
+}
+
+@keyframes stationArtIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(5px) saturate(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes stationCopyIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
   }
 }
 
@@ -327,6 +471,7 @@ body {
   max-width: none;
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+  font-size: clamp(14px, 2vw, 22px);
 }
 
 *::-webkit-scrollbar {
@@ -369,21 +514,94 @@ body {
 
 @media (max-width: 1240px) {
   .app-container {
-    grid-template-columns: minmax(280px, 330px) minmax(280px, 1fr) minmax(280px, 330px);
-    gap: 16px;
+    grid-template-columns: minmax(250px, 300px) minmax(260px, 1fr) minmax(250px, 300px);
+    gap: 14px;
+    padding: 18px;
     padding-bottom: 84px;
   }
 
   .panel-left {
-    max-width: 330px;
+    max-width: 300px;
+    padding: 14px;
   }
 
   .panel-right {
-    max-width: 330px;
+    max-width: 300px;
+    gap: 14px;
   }
 
   .panel-center {
-    width: min(100%, 560px);
+    width: min(100%, 500px);
+  }
+
+  .panel-right > .neon-panel {
+    border-radius: 20px;
+    padding: 16px 12px;
+  }
+
+  .panel-right > .background-panel {
+    padding: 16px;
+  }
+
+  .timer-display {
+    font-size: clamp(3.1rem, 11vw, 6.4rem);
+  }
+
+  .timer-input {
+    font-size: clamp(2.8rem, 10vw, 5.8rem);
+  }
+
+  .timer-toggle {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .timer-row {
+    gap: 1.25rem;
+  }
+
+  .timer-adjust {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.85rem;
+  }
+
+  .timer-top-button {
+    min-width: 6.6rem;
+    padding: 0.42rem 0.9rem;
+    font-size: 18px;
+  }
+
+  .bot {
+    gap: 1.25rem;
+  }
+
+  .radio-card {
+    height: 5rem;
+    border-radius: 14px;
+  }
+
+  .radio-card .absolute.inset-x-0.bottom-0 {
+    padding: 0.65rem;
+  }
+
+  .radio-card p {
+    font-size: 12px;
+  }
+
+  .radio-card span {
+    padding-inline: 0.4rem;
+    font-size: 9px;
+  }
+
+  .background-thumb {
+    height: 3.75rem;
+    border-radius: 12px;
+  }
+
+  .color-dot {
+    width: 16px;
+    height: 16px;
   }
 
   .player-floating {
@@ -397,10 +615,11 @@ body {
     right: 16px;
     bottom: 12px;
     max-width: none;
+    font-size: clamp(12px, 1.45vw, 16px);
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
   .app-container {
     display: flex;
     flex-direction: column;

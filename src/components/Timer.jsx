@@ -28,11 +28,11 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
     return (
         <div className="bot flex w-full flex-col items-center gap-6 sm:gap-8">
 
-            <div className="flex w-full items-center justify-center gap-3 sm:gap-8">
+            <div className="timer-row flex w-full items-center justify-center gap-3 sm:gap-8">
 
                 <GlassButton
                     onClick={() => onAjustar(-1)}
-                    className={`h-10 w-10 rounded-full sm:h-12 sm:w-12
+                    className={`timer-adjust h-10 w-10 rounded-full sm:h-12 sm:w-12
                         ${corriendo ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
                 >
                     <FontAwesomeIcon icon={faMinus} />
@@ -51,12 +51,12 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
                         }}
                         onBlur={confirmarEdicion}
                         onKeyDown={e => e.key === 'Enter' && confirmarEdicion()}
-                        className="w-[min(70vw,16rem)] border-b-2 border-white/50 bg-transparent text-center text-[clamp(3rem,15vw,8rem)] font-bold outline-none"
+                        className="timer-input w-[min(70vw,16rem)] border-b-2 border-white/50 bg-transparent text-center text-[clamp(3rem,15vw,8rem)] font-bold outline-none"
                     />
                 ) : (
                     <h1
                         onClick={!corriendo ? abrirEditor : undefined}
-                        className={`max-w-full text-center font-[Source_Code_Pro] font-bold transition-all duration-300 text-[clamp(3.6rem,15vw,9rem)]
+                        className={`timer-display max-w-full text-center font-[Source_Code_Pro] font-bold transition-all duration-300 text-[clamp(3.6rem,15vw,9rem)]
                             ${!corriendo
                                 ? 'cursor-pointer hover:opacity-100 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]'
                                 : 'cursor-default'
@@ -68,7 +68,7 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
 
                 <GlassButton
                     onClick={() => onAjustar(1)}
-                    className={`h-10 w-10 rounded-full sm:h-12 sm:w-12
+                    className={`timer-adjust h-10 w-10 rounded-full sm:h-12 sm:w-12
                         ${corriendo ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}
                 >
                     <FontAwesomeIcon icon={faPlus} />
@@ -78,7 +78,7 @@ function Timer({ segundos, corriendo, onToggle, onAjustar, onCambiarTiempo }) {
 
             <button
                 onClick={onToggle}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-300 bg-white text-black hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+                className="timer-toggle w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-300 bg-white text-black hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
             >
                 {corriendo ? (
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">

@@ -23,6 +23,28 @@ const accentOptions = [
   { name: "Magenta", hex: "#ff5fd2", rgb: "255, 95, 210" },
 ];
 const accentPalette = accentOptions.filter((item) => !item.neutral);
+const maxVibesVisibles = 6;
+const defaultVibesVisibles = vibes.slice(0, maxVibesVisibles).map((item) => item.name);
+const nombresVibesDisponibles = new Set([...vibes, ...extraVibes].map((item) => item.name));
+
+const normalizarVibesVisibles = (names) => {
+  const visibles = Array.isArray(names)
+    ? names.filter((name, index) => (
+      nombresVibesDisponibles.has(name) && names.indexOf(name) === index
+    ))
+    : [];
+
+  for (const name of defaultVibesVisibles) {
+    if (visibles.length >= maxVibesVisibles) break;
+    if (!visibles.includes(name)) visibles.push(name);
+  }
+
+  return visibles.slice(0, maxVibesVisibles);
+};
+
+const obtenerCanalesRgb = (rgb) => (
+  rgb.split(",").map((value) => Number(value.trim()))
+);
 
 export default function App() {
   const {
@@ -53,12 +75,19 @@ export default function App() {
     const s = localStorage.getItem("fondo");
     return s?.startsWith("data:") ? s : null;
   });
+  const [fondoTransicion, setFondoTransicion] = useState({
+    actual: fondoCustom ?? fondo,
+    anterior: null,
+    version: 0,
+  });
   const [accentHex, setAccentHex] = useState(() => {
     const saved = localStorage.getItem("ui-accent");
     return accentOptions.find((item) => item.hex === saved)?.hex ?? accentOptions[0].hex;
   });
   const fondoActual = fondoCustom ?? fondo;
   const accent = accentOptions.find((item) => item.hex === accentHex) ?? accentOptions[0];
+  const accentVisualHex = accent.neutral ? "#ffffff" : accent.hex;
+  const [accentR, accentG, accentB] = obtenerCanalesRgb(accent.rgb);
 
   const audioRef = useRef(null);
   const currentStreamRef = useRef(null);
@@ -81,15 +110,14 @@ export default function App() {
   const [vibesVisiblesNombres, setVibesVisiblesNombres] = useState(() => {
     const g = localStorage.getItem("vibes-visibles");
     const parsed = g ? JSON.parse(g) : null;
-    return Array.isArray(parsed) && parsed.length
-      ? parsed
-      : vibes.slice(0, 6).map((item) => item.name);
+    return normalizarVibesVisibles(parsed);
   });
   const [mostrarHudVolumen, setMostrarHudVolumen] = useState(false);
   const [hoverHudVolumen, setHoverHudVolumen] = useState(false);
   const hideVolumeHudRef = useRef(null);
   const draggingVolumeRef = useRef(false);
   const volumeTrackRef = useRef(null);
+  const fondoTransicionRef = useRef(null);
 
   const todasLasVibes = useMemo(() => [...vibes, ...extraVibes], []);
 
@@ -97,7 +125,7 @@ export default function App() {
     return vibesVisiblesNombres
       .map((name) => todasLasVibes.find((item) => item.name === name))
       .filter(Boolean)
-      .slice(0, 6)
+      .slice(0, maxVibesVisibles)
       .map((item, index) => ({
         ...item,
         uiAccent: accentPalette[index % accentPalette.length],
@@ -122,11 +150,36 @@ export default function App() {
   }, [fondo, fondoCustom]);
 
   useEffect(() => {
+    setFondoTransicion((prev) => {
+      if (prev.actual === fondoActual) return prev;
+
+      clearTimeout(fondoTransicionRef.current);
+      fondoTransicionRef.current = setTimeout(() => {
+        setFondoTransicion((current) => ({ ...current, anterior: null }));
+      }, 950);
+
+      return {
+        actual: fondoActual,
+        anterior: prev.actual,
+        version: prev.version + 1,
+      };
+    });
+  }, [fondoActual]);
+
+  useEffect(() => () => clearTimeout(fondoTransicionRef.current), []);
+
+  useEffect(() => {
     localStorage.setItem("ui-accent", accent.hex);
   }, [accent]);
 
   useEffect(() => {
-    localStorage.setItem("vibes-visibles", JSON.stringify(vibesVisiblesNombres));
+    const normalizadas = normalizarVibesVisibles(vibesVisiblesNombres);
+    if (normalizadas.join("|") !== vibesVisiblesNombres.join("|")) {
+      setVibesVisiblesNombres(normalizadas);
+      return;
+    }
+
+    localStorage.setItem("vibes-visibles", JSON.stringify(normalizadas));
   }, [vibesVisiblesNombres]);
 
   useEffect(() => {
@@ -382,7 +435,7 @@ export default function App() {
   const agregarEstacion = (station) => {
     setVibesVisiblesNombres((prev) => {
       if (prev.includes(station.name)) return prev;
-      if (prev.length < 6) return [...prev, station.name];
+      if (prev.length < maxVibesVisibles) return [...prev, station.name];
 
       const replaceIndex = [...prev].reverse().findIndex((name) => {
         const esFavorito = favoritos.includes(name);
@@ -401,15 +454,31 @@ export default function App() {
     <div
       className="app-container text-white"
       style={{
-        backgroundImage: `url(${fondoActual})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
         "--accent-hex": accent.neutral ? "255, 255, 255" : accent.hex,
-        "--accent-rgb": accent.rgb,
-        "--accent-strength": accent.neutral ? "0" : "1",
+        "--accent-r": accentR,
+        "--accent-g": accentG,
+        "--accent-b": accentB,
+        "--accent-rgb": `${accentR}, ${accentG}, ${accentB}`,
+        "--accent-strength": accent.neutral ? 0 : 1,
       }}
     >
-      <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px] backdrop-brightness-90" />
+      {fondoTransicion.anterior && (
+        <div
+          className="app-background app-background-previous"
+          style={{ backgroundImage: `url(${fondoTransicion.anterior})` }}
+        />
+      )}
+      <div
+        key={fondoTransicion.version}
+        className="app-background app-background-current"
+        style={{ backgroundImage: `url(${fondoTransicion.actual})` }}
+      />
+
+      <div className={`absolute inset-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
+        ${corriendo
+          ? "bg-black/24 backdrop-blur-[5px] backdrop-brightness-80 backdrop-saturate-90"
+          : "bg-black/10 backdrop-blur-[2px] backdrop-brightness-90"}`}
+      />
 
         <div className={`panel-left z-[100] rounded-3xl p-4 glass-dark neon-panel
           transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]
@@ -466,7 +535,7 @@ export default function App() {
                   onClick={() => setModalEstacionesAbierto(true)}
                   className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-medium tracking-[0.12em] text-white/80 uppercase transition hover:bg-white/16 hover:text-white"
                 >
-                  + Agregar mas
+                  + Agregar
                 </button>
               </div>
 
@@ -499,7 +568,7 @@ export default function App() {
                           reproducirStream(item);
                         }
                       }}
-                      className="group relative h-24 cursor-pointer overflow-hidden rounded-2xl border border-white/10
+                      className="radio-card group relative h-24 cursor-pointer overflow-hidden rounded-2xl border border-white/10
                         bg-[rgba(20,20,30,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-95"
                       style={{
                         backgroundImage: `linear-gradient(180deg, rgba(4,8,18,0.08) 0%, rgba(4,8,18,0.68) 65%, rgba(4,8,18,0.92) 100%), url(${item.image || "/hero.png"})`,
@@ -561,7 +630,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="glass-dark neon-panel relative flex flex-1 flex-col overflow-hidden rounded-3xl p-6">
+          <div className="background-panel glass-dark neon-panel relative flex flex-1 flex-col overflow-hidden rounded-3xl p-6">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="shrink-0 text-sm tit">Fondos</h2>
               <div className="flex items-center gap-2">
@@ -592,23 +661,23 @@ export default function App() {
                       setFondoCustom(null);
                       setIndexFondo(i);
                     }}
-                    className="relative h-18 cursor-pointer rounded-xl bg-cover bg-center"
+                    className="background-thumb relative h-18 cursor-pointer rounded-xl bg-cover bg-center"
                     style={{ backgroundImage: `url(${img})` }}
                   >
                     <div className="absolute inset-0 rounded-xl bg-black/10 backdrop-blur-[0.5px]" />
                     {fondoActual === img && !fondoCustom && (
                       <>
-                        <div className="absolute inset-0 rounded-xl border-2" style={{ borderColor: `${accent.hex}cc` }} />
-                        <div className="absolute inset-0 rounded-xl animate-pulse border" style={{ borderColor: `${accent.hex}55`, boxShadow: `0 0 18px ${accent.hex}` }} />
+                        <div className="absolute inset-0 rounded-xl border-2 transition-colors duration-500" style={{ borderColor: `${accentVisualHex}cc` }} />
+                        <div className="absolute inset-0 rounded-xl animate-pulse border transition-all duration-500" style={{ borderColor: `${accentVisualHex}55`, boxShadow: `0 0 18px ${accentVisualHex}` }} />
                       </>
                     )}
                   </div>
                 ))}
 
                 <label
-                  className="group relative flex h-18 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border"
+                  className="background-thumb group relative flex h-18 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border transition-colors duration-500"
                   style={{
-                    borderColor: `${accent.hex}40`,
+                    borderColor: `${accentVisualHex}40`,
                     backgroundImage: fondoCustom ? `url(${fondoCustom})` : "none",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
@@ -723,7 +792,7 @@ export default function App() {
       {!corriendo && (
         <div
           className={`info-hints z-[220] px-4 transition-opacity duration-500 ${visible ? "opacity-100" : "opacity-0"}`}
-          style={{ fontFamily: "'VT323', monospace", fontSize: "clamp(14px, 2vw, 22px)" }}
+          style={{ fontFamily: "'VT323', monospace" }}
         >
           ← → cambia entre fondos · ↑ ↓ cambia de estacion de radio · Space reproduce o pausa la musica · Ctrl + Scroll ajusta volumen
         </div>
@@ -738,4 +807,3 @@ export default function App() {
     </div>
   );
 }
-

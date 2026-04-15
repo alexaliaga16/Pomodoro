@@ -42,7 +42,7 @@ function ContadorSesiones({ sesion, totalSesiones, onCambiarSesion, accentRgb, a
                     accentRgb={accentRgb}
                     accentStrength={accentStrength}
                     style={{ fontFamily: "'VT323', monospace" }}
-                    className={'w-full max-w-fit px-4 py-2 text-center text-[22px] leading-none tracking-[0.08em] sm:px-6 sm:text-[22px]'}>
+                    className={'timer-top-button w-full max-w-fit px-4 py-2 text-center text-[22px] leading-none tracking-[0.08em] sm:px-6 sm:text-[22px]'}>
                     Session #{sesion} / {totalSesiones}
                 </GlassButton>
             )}
